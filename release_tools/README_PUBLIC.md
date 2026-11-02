@@ -1,5 +1,20 @@
 # SolidWorks AI
 
+## 下载与开始使用
+
+**[点击下载 Windows 版（内含 EXE，约 173 MB）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.4.0-rc13/SolidWorksAI-0.4.0-rc13-windows-x64.zip)**
+
+当前版本为 **0.4.0-rc13 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.4.0-rc13)。
+
+1. 准备 Windows 64 位电脑，并安装、激活 SolidWorks 2024。
+2. 点击上面的下载链接，下载后右键压缩包，选择“全部解压缩”。
+3. 打开解压后的 `SolidWorksAI` 文件夹，双击 `SolidWorksAI.exe`。保留同目录的 `SolidWorksMCP.exe` 和 `_internal` 文件夹。
+4. 在打开的网页中进入“模型与密钥”，填写自己的 API Key，点击“保存并测试”，随后用自然语言输入建模需求。
+
+发布包自带运行环境，无需安装 Python 或输入命令行。每位用户使用自己的 API 账户和额度，密钥保存在本人 Windows 凭据管理器中。
+
+GitHub 的 `Code → Download ZIP` 下载的是开发源码；直接使用程序请点击上面的 Windows 版下载链接。
+
 用自然语言操作自己电脑上的 SolidWorks。可分别选择模型理解与复核需求、
 通过原生 MCP / COM 调用建模工具。无需鼠标、键盘或窗口消息自动化。
 
