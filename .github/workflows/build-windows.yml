@@ -1,0 +1,32 @@
+name: Build Windows candidate
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Unique candidate version
+        required: true
+        default: 0.1.0-rc1
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - run: python -m pip install -r requirements-desktop.txt "pyinstaller>=6.22,<7"
+      - run: python -m unittest discover -s tests -v
+      - name: Build local candidate
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: python release_tools/build.py --tag $env:RELEASE_TAG
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-candidate
+          path: |
+            releases/*/*.zip
+            releases/*/SHA256SUMS.txt
+          if-no-files-found: error

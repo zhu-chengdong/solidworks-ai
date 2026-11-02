@@ -1,0 +1,13 @@
+.venv/
+runtime/
+artifacts/
+__pycache__/
+.pytest_cache/
+.env
+.env.local
+.env.*.local
+providers.local.json
+dist/
+build/
+releases/
+

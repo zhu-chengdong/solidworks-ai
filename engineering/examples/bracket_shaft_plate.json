@@ -1,0 +1,381 @@
+{
+  "document": "assembly",
+  "parts": [
+    {
+      "id": "base",
+      "label": "孔板底座",
+      "shape": "plate",
+      "length_mm": 160,
+      "width_mm": 100,
+      "thickness_mm": 8,
+      "holes": [
+        {
+          "x_mm": -65,
+          "y_mm": -35,
+          "radius_mm": 3.3
+        },
+        {
+          "x_mm": 65,
+          "y_mm": -35,
+          "radius_mm": 3.3
+        },
+        {
+          "x_mm": 65,
+          "y_mm": 35,
+          "radius_mm": 3.3
+        },
+        {
+          "x_mm": -65,
+          "y_mm": 35,
+          "radius_mm": 3.3
+        }
+      ],
+      "color_rgb": [
+        0.65,
+        0.7,
+        0.75
+      ]
+    },
+    {
+      "id": "support",
+      "label": "L形支架",
+      "shape": "l_bracket",
+      "length_mm": 40,
+      "height_mm": 60,
+      "width_mm": 20,
+      "thickness_mm": 6,
+      "color_rgb": [
+        0.42,
+        0.5,
+        0.58
+      ]
+    },
+    {
+      "id": "shaft",
+      "label": "12毫米竖轴",
+      "shape": "shaft",
+      "diameter_mm": 12,
+      "length_mm": 88,
+      "color_rgb": [
+        0.85,
+        0.5,
+        0.2
+      ]
+    },
+    {
+      "id": "top",
+      "label": "上部孔板",
+      "shape": "plate",
+      "length_mm": 140,
+      "width_mm": 60,
+      "thickness_mm": 8,
+      "holes": [
+        {
+          "x_mm": 0,
+          "y_mm": 0,
+          "radius_mm": 6.1
+        },
+        {
+          "x_mm": -55,
+          "y_mm": -20,
+          "radius_mm": 2.75
+        },
+        {
+          "x_mm": 55,
+          "y_mm": -20,
+          "radius_mm": 2.75
+        },
+        {
+          "x_mm": 55,
+          "y_mm": 20,
+          "radius_mm": 2.75
+        },
+        {
+          "x_mm": -55,
+          "y_mm": 20,
+          "radius_mm": 2.75
+        }
+      ],
+      "color_rgb": [
+        0.3,
+        0.55,
+        0.78
+      ]
+    },
+    {
+      "id": "guide",
+      "label": "轴导向块",
+      "shape": "plate",
+      "length_mm": 40,
+      "width_mm": 40,
+      "thickness_mm": 8,
+      "holes": [
+        {
+          "x_mm": 0,
+          "y_mm": 0,
+          "radius_mm": 6.1
+        }
+      ],
+      "color_rgb": [
+        0.55,
+        0.6,
+        0.78
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "base",
+      "part_id": "base",
+      "fixed": true
+    },
+    {
+      "id": "left",
+      "part_id": "support",
+      "position_mm": [
+        -50,
+        10,
+        38
+      ],
+      "rotation_deg": [
+        90,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "right",
+      "part_id": "support",
+      "position_mm": [
+        50,
+        -10,
+        38
+      ],
+      "rotation_deg": [
+        90,
+        0,
+        180
+      ]
+    },
+    {
+      "id": "lower_guide",
+      "part_id": "guide",
+      "position_mm": [
+        0,
+        0,
+        8
+      ]
+    },
+    {
+      "id": "shaft",
+      "part_id": "shaft",
+      "position_mm": [
+        0,
+        0,
+        8
+      ]
+    },
+    {
+      "id": "top",
+      "part_id": "top",
+      "position_mm": [
+        0,
+        0,
+        68
+      ]
+    },
+    {
+      "id": "upper_guide",
+      "part_id": "guide",
+      "position_mm": [
+        0,
+        0,
+        76
+      ]
+    }
+  ],
+  "mates": [
+    {
+      "id": "LeftX",
+      "kind": "distance",
+      "a": "base",
+      "b": "left",
+      "plane_a": "YZ",
+      "plane_b": "YZ",
+      "distance_mm": 50,
+      "flip": true,
+      "alignment": "closest"
+    },
+    {
+      "id": "LeftY",
+      "kind": "distance",
+      "a": "base",
+      "b": "left",
+      "plane_a": "XZ",
+      "plane_b": "XY",
+      "distance_mm": 10,
+      "flip": false,
+      "alignment": "anti_aligned"
+    },
+    {
+      "id": "LeftZ",
+      "kind": "distance",
+      "a": "base",
+      "b": "left",
+      "plane_a": "XY",
+      "plane_b": "XZ",
+      "distance_mm": 38,
+      "flip": false,
+      "alignment": "aligned"
+    },
+    {
+      "id": "RightX",
+      "kind": "distance",
+      "a": "base",
+      "b": "right",
+      "plane_a": "YZ",
+      "plane_b": "YZ",
+      "distance_mm": 50,
+      "flip": false,
+      "alignment": "anti_aligned"
+    },
+    {
+      "id": "RightY",
+      "kind": "distance",
+      "a": "base",
+      "b": "right",
+      "plane_a": "XZ",
+      "plane_b": "XY",
+      "distance_mm": 10,
+      "flip": true,
+      "alignment": "aligned"
+    },
+    {
+      "id": "RightZ",
+      "kind": "distance",
+      "a": "base",
+      "b": "right",
+      "plane_a": "XY",
+      "plane_b": "XZ",
+      "distance_mm": 38,
+      "flip": false,
+      "alignment": "aligned"
+    },
+    {
+      "id": "LowerZ",
+      "kind": "distance",
+      "a": "base",
+      "b": "lower_guide",
+      "plane_a": "XY",
+      "plane_b": "XY",
+      "distance_mm": 8,
+      "flip": false,
+      "alignment": "closest"
+    },
+    {
+      "id": "LowerX",
+      "kind": "coincident",
+      "a": "base",
+      "b": "lower_guide",
+      "plane_a": "YZ",
+      "plane_b": "YZ"
+    },
+    {
+      "id": "LowerY",
+      "kind": "coincident",
+      "a": "base",
+      "b": "lower_guide",
+      "plane_a": "XZ",
+      "plane_b": "XZ"
+    },
+    {
+      "id": "ShaftAxis",
+      "kind": "concentric",
+      "a": "lower_guide",
+      "b": "shaft",
+      "radius_a_mm": 6.1,
+      "radius_b_mm": 6,
+      "axis_point_a_mm": [
+        0,
+        0,
+        0
+      ],
+      "axis_point_b_mm": [
+        0,
+        0,
+        0
+      ],
+      "lock_rotation": true
+    },
+    {
+      "id": "ShaftSeat",
+      "kind": "coincident",
+      "a": "lower_guide",
+      "b": "shaft",
+      "plane_a": "XY",
+      "plane_b": "XY"
+    },
+    {
+      "id": "TopAxis",
+      "kind": "concentric",
+      "a": "shaft",
+      "b": "top",
+      "radius_a_mm": 6,
+      "radius_b_mm": 6.1,
+      "axis_point_a_mm": [
+        0,
+        0,
+        0
+      ],
+      "axis_point_b_mm": [
+        0,
+        0,
+        0
+      ],
+      "lock_rotation": true
+    },
+    {
+      "id": "TopZ",
+      "kind": "distance",
+      "a": "shaft",
+      "b": "top",
+      "plane_a": "XY",
+      "plane_b": "XY",
+      "distance_mm": 60,
+      "flip": false,
+      "alignment": "aligned"
+    },
+    {
+      "id": "UpperAxis",
+      "kind": "concentric",
+      "a": "shaft",
+      "b": "upper_guide",
+      "radius_a_mm": 6,
+      "radius_b_mm": 6.1,
+      "axis_point_a_mm": [
+        0,
+        0,
+        0
+      ],
+      "axis_point_b_mm": [
+        0,
+        0,
+        0
+      ],
+      "lock_rotation": true
+    },
+    {
+      "id": "UpperZ",
+      "kind": "distance",
+      "a": "shaft",
+      "b": "upper_guide",
+      "plane_a": "XY",
+      "plane_b": "XY",
+      "distance_mm": 68,
+      "flip": false,
+      "alignment": "aligned"
+    }
+  ],
+  "allow_interference": false,
+  "allow_motion": false
+}

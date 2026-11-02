@@ -1,0 +1,30 @@
+{
+  "providers": {
+    "openai": {
+      "base_url": "https://api.openai.com/v1",
+      "model_env": "OPENAI_MODEL",
+      "api_key_env": "OPENAI_API_KEY",
+      "extra_body": {}
+    },
+    "deepseek": {
+      "base_url": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "api_key_env": "DEEPSEEK_API_KEY",
+      "extra_body": {"thinking": {"type": "disabled"}}
+    },
+    "custom": {
+      "base_url_env": "CAD_LLM_BASE_URL",
+      "model_env": "CAD_LLM_MODEL",
+      "api_key_env": "CAD_LLM_API_KEY",
+      "extra_body": {}
+    },
+    "local": {
+      "base_url": "http://127.0.0.1:11434/v1",
+      "model_env": "CAD_LOCAL_MODEL",
+      "api_key_env": "CAD_LOCAL_API_KEY",
+      "api_key_required": false,
+      "extra_body": {}
+    }
+  }
+}
+

@@ -1,0 +1,7 @@
+# Selected MIT SolidworksMCP geometry compiler. No torch, model weights, or UI control.
+numpy>=1.26,<3
+scipy>=1.12,<2
+opencv-python-headless>=4.10,<6
+scikit-image>=0.22,<1
+shapely>=2,<3
+sympy>=1.13,<2

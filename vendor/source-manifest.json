@@ -1,0 +1,792 @@
+{
+  "source": "https://github.com/wzyn20051216/solidworks-automation-skill",
+  "snapshot_date": "2026-10-31",
+  "license": "MIT",
+  "files": [
+    {
+      "path": "scripts/advanced_geometry.py",
+      "sha256": "076c684ee23b8cf15ab2a47afa0df6af705b0f999dee9794b9855aee9bbcd23e"
+    },
+    {
+      "path": "scripts/advanced_geometry_ocp.py",
+      "sha256": "8a195286e863978934fbe528f5ca440d7ebeeab2d9180a0d6ef1a5e643f4cac5"
+    },
+    {
+      "path": "scripts/advanced_surface_ocp.py",
+      "sha256": "82246a75cac3c487d94d50ac275d8224cf083f940e8a7025ea349d127af51991"
+    },
+    {
+      "path": "scripts/backend_router.py",
+      "sha256": "7f08eeb57ddeafa667c2dfb633295b71e815dfc2ca8fa0c18095948aad8c1606"
+    },
+    {
+      "path": "scripts/build_from_spec.py",
+      "sha256": "a3128a1ff5628c2420184ad7a141185d7f5a95f20479111789022f6ce6483b44"
+    },
+    {
+      "path": "scripts/build_smithery_mcpb.py",
+      "sha256": "5df6cc7906cc27b43c056591ed0d8ac15b15e466e3b1bd4ae98b873b0f8e7071"
+    },
+    {
+      "path": "scripts/build_windows_release.ps1",
+      "sha256": "d5fd956b83c45da8f57a3c03af7c8a4ac82736b78bfd94a4b4c87f6bfb2e8a93"
+    },
+    {
+      "path": "scripts/cad_diagnostics.py",
+      "sha256": "bda5a7803b9e04cfde421ec8b540b23a5fa062dfd9a80bc165369f3e23069281"
+    },
+    {
+      "path": "scripts/cad_doctor.py",
+      "sha256": "601813770335bf031ffe15f60fb07c03d475b992e473d0eb45d7c0917c604946"
+    },
+    {
+      "path": "scripts/cad_installation.py",
+      "sha256": "fd18e851a0883c7f392f0351083651183c60f5d5582c3a638a334f055f3d66d7"
+    },
+    {
+      "path": "scripts/cad_studio.py",
+      "sha256": "a3d636aa2bf278a5f21af44e7795d26a282fa0208825b3009e8cece761c46659"
+    },
+    {
+      "path": "scripts/capabilities.py",
+      "sha256": "5472082c1ced02d5d50edc39b36acd590bbe31266bebd71a5859c1497ce708cf"
+    },
+    {
+      "path": "scripts/delivery_compare.py",
+      "sha256": "d1e49666b4ac504baffb29a2799418418b892134e46c9b0b931ccf2c8ac605ce"
+    },
+    {
+      "path": "scripts/design_spec.py",
+      "sha256": "aa75acd1f9c6ddf2784a372fd512851d66671bfb7ac248a0f3bf7037d8aa26d3"
+    },
+    {
+      "path": "scripts/dfm_profiles.py",
+      "sha256": "33e34d638866af3518c54013158cbab3849dd9a011efb9c17041db0950f9b2ad"
+    },
+    {
+      "path": "scripts/dfm_review.py",
+      "sha256": "589e16a0e1c13bb2ba232ffcc7e27d098da41da0e6836f9a316e7f8695e7d42d"
+    },
+    {
+      "path": "scripts/drawing_spec.py",
+      "sha256": "9cff92d7ceeb00a1fb9a906cdac6e700259d21b4b62b2af07b11ded9fddbc97b"
+    },
+    {
+      "path": "scripts/dxf_preview_scene.py",
+      "sha256": "fc501a8b498a69828bfd6dc5bf94c5956d11714740eba8df6e7c8aeffc60e433"
+    },
+    {
+      "path": "scripts/fea_analysis.py",
+      "sha256": "c6ad9813e0380264cbf98aa1cb0e8996f82d2eaae153d49a8ee19d701c216023"
+    },
+    {
+      "path": "scripts/fea_convergence.py",
+      "sha256": "795e703535db6b3963a192407cce7f6daed99eabf33fe631e8e5af272fa36590"
+    },
+    {
+      "path": "scripts/headless_cad_writer.py",
+      "sha256": "f3d9b230d8898dfb354390b60400096c8e19c1a5dafbf2760b5b8aa07e455c34"
+    },
+    {
+      "path": "scripts/headless_occt_service.py",
+      "sha256": "a9296dc08bafb36136008165eb8c06deae03bd1f6468ced0f3fcfc55bcc0f0a9"
+    },
+    {
+      "path": "scripts/http_boundary.py",
+      "sha256": "f1690a8afb38a550f4c8e4c9c4eb1fbc03ef070ff39d78ace0a9b663e93bea8e"
+    },
+    {
+      "path": "scripts/release_check.py",
+      "sha256": "fb3c4e9ddf47ac6fb559a4af129076adc9e0564bc56821e7cecbf22e456ea611"
+    },
+    {
+      "path": "scripts/routing_review.py",
+      "sha256": "ea5dae6b89e2b7d92d01f97b8f348b12c5edcbd102c1bdf6f80d83b984e56460"
+    },
+    {
+      "path": "scripts/stability_regression.py",
+      "sha256": "48fbf73fb96139f56a1cc7393ddf0116096986c50845c768953c28351c895517"
+    },
+    {
+      "path": "scripts/sw_addin_host.ps1",
+      "sha256": "b823e4d2767660c470ce215568e7761490ad3693aec7905a489c6ae4d5363416"
+    },
+    {
+      "path": "scripts/sw_addin_host.py",
+      "sha256": "cf68ffde3deb79ebab99455cb73b56b8b318a6ae1c2b5b2dbfb7a6ed7533ee58"
+    },
+    {
+      "path": "scripts/sw_appearance.py",
+      "sha256": "747661ebce0c65874c1b5f6ae8a945c93e35ce210cc5732338215b714d0600bb"
+    },
+    {
+      "path": "scripts/sw_assembly.py",
+      "sha256": "4c6f3df12112c367e91595a064387661b4c80601172b1eebc540c1add174dd65"
+    },
+    {
+      "path": "scripts/sw_capability_probe.py",
+      "sha256": "ff72f047e2b64ef86ad1bef090c449ee6f9c847d5b77d20ef5d9b08351e7bc1d"
+    },
+    {
+      "path": "scripts/sw_connect.py",
+      "sha256": "a4aad6e74450baf393135b336bd5a4ae8a03fba79c85a271405947c1fa9b90d4"
+    },
+    {
+      "path": "scripts/sw_delivery.py",
+      "sha256": "caf86ab366fd3f00ac35513ec17b9f67ddd9eb486dab2aae9a7934a98923820b"
+    },
+    {
+      "path": "scripts/sw_delivery_comtypes_worker.py",
+      "sha256": "cd0cd7bf744274832ee0d8f47782c17696fe8bc2bab10c3fbc892ec3403643eb"
+    },
+    {
+      "path": "scripts/sw_document_data.py",
+      "sha256": "157bc77158251194d4930fa6919aa5f07fa4f1fd9898b3be155ebd6b9015ad1c"
+    },
+    {
+      "path": "scripts/sw_drawing.py",
+      "sha256": "834fb7fdb0ec1a77ff9b2c1186f1d8294342b425b5321082e1addb9081882859"
+    },
+    {
+      "path": "scripts/sw_drawing_review.py",
+      "sha256": "e25afb3455f1af86d2ac4e4200196f5be400d4560222d9581337904af25e3650"
+    },
+    {
+      "path": "scripts/sw_edge_select.py",
+      "sha256": "ce01a9d72a2adcd5cbace253de1374dd4a621dcfd9bb0e99376d7efcfffb2a2c"
+    },
+    {
+      "path": "scripts/sw_entity_reference.py",
+      "sha256": "10841096283fec9742621ad7d93b9ba2161a4f90dbae7d42a433c52d0a836d1a"
+    },
+    {
+      "path": "scripts/sw_export.py",
+      "sha256": "2a71738605a5f7614826da72d7be0b4ddbdda8bffd061ff5900488de774b9218"
+    },
+    {
+      "path": "scripts/sw_file_load.py",
+      "sha256": "3a0a61b0f25a6b606386ab45da7e051d3558055291ea3a3861f9cbc83e9678df"
+    },
+    {
+      "path": "scripts/sw_gear.py",
+      "sha256": "7607713f152a1bed678f65a1a2e6f322488a9c8cfbe1614b6bb0d77b08cc3db8"
+    },
+    {
+      "path": "scripts/sw_hole_features.py",
+      "sha256": "b500ac53184335358ba18b9bb3e09b39768497fa9881b2f48c45331fc9a6b572"
+    },
+    {
+      "path": "scripts/sw_import_mesh_reference.py",
+      "sha256": "1f37ceb5f90eaf88ea66537a8d5d8d61f870cb961dbd705e40cb1aed67549539"
+    },
+    {
+      "path": "scripts/sw_macro_guard.py",
+      "sha256": "ade23996523ffd826fb0236a080516a145d94f221c351dd50b1d3d1eaa677929"
+    },
+    {
+      "path": "scripts/sw_measure.py",
+      "sha256": "51ac69b6f322363117b3bbae46dc4064b2167f0415f3e85c0c5896febb397a46"
+    },
+    {
+      "path": "scripts/sw_motion.py",
+      "sha256": "bc5e91392bb4b469d911eb05bbfef5746a309ff81c466589b0a38d476aa624fa"
+    },
+    {
+      "path": "scripts/sw_native_wire.cs",
+      "sha256": "7bab67743d5ca282d6619343f1add0b8bc118ead83fe6d6c9dd5fd13d984b5e4"
+    },
+    {
+      "path": "scripts/sw_native_wire.ps1",
+      "sha256": "36af4f2e53b3ad9955386c982d6a94fc113d42f39f93fe66b72a43d708c60a46"
+    },
+    {
+      "path": "scripts/sw_native_wire.py",
+      "sha256": "005b2c08eb1ba99ead2b915ae5248b241f9209413da588fa591c6827c2d55f82"
+    },
+    {
+      "path": "scripts/sw_part.py",
+      "sha256": "a9852b1cd041a98828362d35c880ff50b65ed5d0e69ea6f4883c69c538c3f16b"
+    },
+    {
+      "path": "scripts/sw_pattern.py",
+      "sha256": "8ef6011b2658e0762de696c86dc555dc5dfd0c9a030b3a37bc528b8d12f27fd4"
+    },
+    {
+      "path": "scripts/sw_preflight.py",
+      "sha256": "85fbd2fefb0ef5a28c36668a3bda07388bdf26b4a4fa4e860e1ce7a71cd79060"
+    },
+    {
+      "path": "scripts/sw_process.py",
+      "sha256": "51e8eb35049b3209e95754ed6cec1f1217a798fdfad950b83dddead933fdf905"
+    },
+    {
+      "path": "scripts/sw_review.py",
+      "sha256": "959aa2a0c82b8511385708a7c344b04d8feae0ef978f43167e7d1f4f42a33e70"
+    },
+    {
+      "path": "scripts/sw_session.py",
+      "sha256": "38456c77ab9a4778c61d97a92508324f0da0362fd630ea3045d2ec1a8a8acf5c"
+    },
+    {
+      "path": "scripts/sw_sheet_metal.py",
+      "sha256": "ed48fa0d0c6912e3118db5f196895af1cd35b592940055fed1bfcf8c0bd2f08a"
+    },
+    {
+      "path": "scripts/sw_sketch_quality.py",
+      "sha256": "8c33a787d418bc1f29c2d556a4a210a61cb3fa239ff824dbe080ac2f4c5bcf7e"
+    },
+    {
+      "path": "scripts/sw_weldment.py",
+      "sha256": "772de395db6559b5c80a6c110ed3929294f697a582818d1d26c2f7b2c64367f2"
+    },
+    {
+      "path": "scripts/sync_bundled_skill.py",
+      "sha256": "afa111227be3535e4c1974a37aca1f8a9c3f70f70e2b0a1b654c429d08ae8819"
+    },
+    {
+      "path": "scripts/validate_mcp.py",
+      "sha256": "74dffa04ee662a3ae2931e43ee70646c9600f9e1d5e0d8dcc051aa0cf0170527"
+    },
+    {
+      "path": "scripts/validate_skill.py",
+      "sha256": "7e44da0e245b309bb2a43031c075d6dd8797b0b9253f1968b5a54c29b7fc4347"
+    },
+    {
+      "path": "scripts/verify_updater_release.ps1",
+      "sha256": "d2059b9923a4009e294e4c9a071ea2ebb0af7fc3e9d01424f6d2467d8f62a213"
+    },
+    {
+      "path": "scripts/__init__.py",
+      "sha256": "be49e18fb435b58e2739d77742cfcc9a9a28f3890fe85cc740d91c4c790a3825"
+    },
+    {
+      "path": "scripts/core/capability.py",
+      "sha256": "f51f4660dc9ed02ecb3b000267ef10171af4ba09888475593e400316edec60db"
+    },
+    {
+      "path": "scripts/core/execution.py",
+      "sha256": "6ce88ee51c6528a3ba0bba260535c346d04049d2d72c0f031fa6842057187d30"
+    },
+    {
+      "path": "scripts/core/recovery.py",
+      "sha256": "171e15e7b5538336f2e4c1503626b28278f49ef05e7314694272f9ab5ced9f6d"
+    },
+    {
+      "path": "scripts/core/state.py",
+      "sha256": "b25eaf1c13fd9354d547e616bca41b8571601b823347d103d2c0874081c1dba4"
+    },
+    {
+      "path": "scripts/core/trace.py",
+      "sha256": "ee49e0fc8f8bd342fe69f1473eced1c43db26a74d0c6474e9f2b081f6f8f7305"
+    },
+    {
+      "path": "scripts/core/verification.py",
+      "sha256": "4862d1df5adea7cb8186cbf8db09e070a23f4ad9f44ff28f09a547d9498b11c0"
+    },
+    {
+      "path": "scripts/core/__init__.py",
+      "sha256": "293028f2c41ae18a165c6900fda2e8a1a63e37dc65d712a6c1d73d110d366151"
+    },
+    {
+      "path": "mcp-server/artifact_access.py",
+      "sha256": "181b3cecd3dcafd0d0fc6b3c71352e7d38b38a2fb8066992cae7eba835a04071"
+    },
+    {
+      "path": "mcp-server/http_transport.py",
+      "sha256": "3d6d58224596e8ea58558f61c8e5378ece8d309f924823a2daf05ad4884102fa"
+    },
+    {
+      "path": "mcp-server/README.md",
+      "sha256": "6db71cab34cc6117ce970c903883a9538ee15fe1b209db3c2b77e984d40e1b6c"
+    },
+    {
+      "path": "mcp-server/register_all_ai_mcp.js",
+      "sha256": "1a28beb9d3de376975d65726289c55fa749c851123d561d4610d3f3f5dcfb17f"
+    },
+    {
+      "path": "mcp-server/register_all_ai_mcp.ps1",
+      "sha256": "fa2e3096dd2c8896ad8b5a3754b623d9b44e9226d9578f140461d39ee16182da"
+    },
+    {
+      "path": "mcp-server/register_codex_mcp.ps1",
+      "sha256": "28ac36aae9931714d80a5a55e6ae20d2e5f5834a92439a99d907845b8930760c"
+    },
+    {
+      "path": "mcp-server/requirements.txt",
+      "sha256": "cf73646f2a1645d92e4a7be1537e7f2f43ee57630fac93d695478c023cc3bb25"
+    },
+    {
+      "path": "mcp-server/server.py",
+      "sha256": "718103cd15175d3cd8b86b47f19b4fadd6ec5b4d372706c9b5aa9dbe0275f6bb"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/agent_contracts.py",
+      "sha256": "9472986383f7ad1058047226e6249dc9673ac021c255c897c7bc497d6737ccc3"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/agent_providers.py",
+      "sha256": "abaefa99f2624bae9f0cc38a2e0fb4b4a54228776e9c8c8f0143b7a233db1b8f"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/app.py",
+      "sha256": "d841875305ff4c62019748834a80ed37a9f9666a876ffcb0902999641ff65122"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/artifact_ledger.py",
+      "sha256": "98a8e4afdfd5156aac7cbdda4c8f3a292d4ce95c9ee4fc04a00fdb9ab21a3150"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/cad_core_contracts.py",
+      "sha256": "46c2ea9489868875c5e111a9a3763f4a9898b14370255fbe46eaf9d2774b80cb"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/core.py",
+      "sha256": "ec5f0cb88c9fd9952373ef80fa86211da4b98062e40fee030ec24824ad3eb87a"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/engineering_orchestrator.py",
+      "sha256": "4ba7047f3c1f40e464948274f006ce41389ee19036bcf725c7ff17cc1c50abe7"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/knowledge_retrieval.py",
+      "sha256": "d34bd7361b087b3034e1654f72fff6354aed081bb41f95dd30f2f1b7c48cab91"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/mock_runner.py",
+      "sha256": "e5aa7059fbff3466c3b390d08d546aac6cc30e9acac504dae7f7d318b907bea4"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/queue_worker.py",
+      "sha256": "ff237ed3ede4f6c765d0ece2a13dc2e68342454d7fe8ddd1c65a5a845df1c3d1"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/reviewer_gate.py",
+      "sha256": "fbd35aa93c6aa25fa93fab124ca78b4621aea49c9342a1b592a340e83d1b95ed"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/style.py",
+      "sha256": "bcf226b06ecf4e791399b2823b6e2fbc9738ac70ee9735f1a34e36b89f60f7e5"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/worker_health.py",
+      "sha256": "3459e04a951acb1de2404b4756c434b4a1135a68098ac905c0a82bfce01025c2"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/__init__.py",
+      "sha256": "5c1514e87bb2ee0a73b5395690b09b4fa66bbd4cb5c6e7d74652d333662781d7"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/schemas/advanced_geometry.schema.json",
+      "sha256": "a30cf3f07eb5b4d6a10678043f99344eab93847e9b4058acea2bc4dbe304ad56"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/schemas/advanced_surface.schema.json",
+      "sha256": "cd611fc44dbe805bafdc3ca38039068758670cea70f0e1494a721f462b092ede"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/schemas/automation_job.schema.json",
+      "sha256": "a763f131e89079e8a2bbb6e59e943912a35282854e7e39a3bb66e039e7d48ce8"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/schemas/codex_final_response.schema.json",
+      "sha256": "894809a7841a67a59c1e184f8ab974c583d1d64dda92c6948c3e3ec04a405023"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/schemas/evidence_graph.schema.json",
+      "sha256": "e6132d2004882bda62cd305a940cd38ce5c99ed86a71d3a8780ad44181e53a83"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/schemas/fea_analysis.schema.json",
+      "sha256": "5fa0f83cc8377138d01d3563c6101641186e570287cc979787b50deecdf0d63c"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/schemas/neutral_cad_document.schema.json",
+      "sha256": "26c01d2177a1ad073e5e5c7828b0a3a21237d1a4cd88fc447e056c1cd2c2fd21"
+    },
+    {
+      "path": "apps/desktop/cad_workbench/schemas/preview_manifest.schema.json",
+      "sha256": "195c38ded6bafdb217138d7282ce5c1ddcea44a87979fc4b410db3ad649ef4fd"
+    },
+    {
+      "path": "references/advanced.md",
+      "sha256": "f431e286d402ebfbd986e893b009f2f90939254b795f3ec0b48d5e6cbb0db3a8"
+    },
+    {
+      "path": "references/agent-provider-architecture.md",
+      "sha256": "577e080e4c78913c29d38cf09ada249cbdf25d39ea7e76af5e1df05838459a97"
+    },
+    {
+      "path": "references/api-lookup.md",
+      "sha256": "047a74b9c0b1dc19e7888e6bcc3e61d6f60e1ef7d78a2506639f47b9ffacf964"
+    },
+    {
+      "path": "references/appearance.md",
+      "sha256": "72c5ac31fca001705a05a1da4e334734742f7d5beaece2b1b8d6e6d1bea1c8b7"
+    },
+    {
+      "path": "references/assembly.md",
+      "sha256": "322744fd36c61535947a05b8625e86c8094913e3e17732a94ee42b270030a382"
+    },
+    {
+      "path": "references/complex-hole-features.md",
+      "sha256": "d05f4ee02b81b4963b1dfd96f3964b64fd6bbac5804921a0595e3e75ad6d6a7c"
+    },
+    {
+      "path": "references/complex-mechanical-routing.md",
+      "sha256": "a1470dba6d13d0f11d1c2741d6322da373bbb17cd54e05477fe45a1186e4f59c"
+    },
+    {
+      "path": "references/design-spec.md",
+      "sha256": "82045adb8d0223ff7043fc337bb92b88989304495a3cc38969e97bb8883ac6f4"
+    },
+    {
+      "path": "references/drawing.md",
+      "sha256": "994a954c79f31cbe2acf68325b0f9b2e0cdf0197bd847f1ddec622cd2f077273"
+    },
+    {
+      "path": "references/edge-selection.md",
+      "sha256": "b837098eed730a9e619871d2582e6c640cb03011cff8f350afc4180b0dd1edd7"
+    },
+    {
+      "path": "references/enterprise-agent-rag.md",
+      "sha256": "7fec6a3361b77cd36cb5345b8ed3ef1f8c69e86e52d2828000616ede1d8e30b0"
+    },
+    {
+      "path": "references/export.md",
+      "sha256": "af693ad7ce8d0d1ef5d929e74b6716eb6f745b84cb2a447b793cb22f13549fa7"
+    },
+    {
+      "path": "references/gears.md",
+      "sha256": "fb08ce9ad3efbad272bacc4cc57b602501d020b6b0d3d739ba51690755e139b4"
+    },
+    {
+      "path": "references/language-backend-routing.md",
+      "sha256": "5fb1f518a8bc30b7a5f7073b085371f56e56471193352e5e9fd205cba456e39c"
+    },
+    {
+      "path": "references/mcp-server.md",
+      "sha256": "07363214344ab0d2dc69b016b24609a5efa7e5ab1681b725094b600965eaa5b6"
+    },
+    {
+      "path": "references/mesh-reference-import.md",
+      "sha256": "2ed839d35d8972975202393fa5ee72e964f41feb35f30f8c513d8cfb25d4ad72"
+    },
+    {
+      "path": "references/motion-study.md",
+      "sha256": "01c761f8c28c124aa211ac21808359d07fe89b37cad39b35b0c8773349c5c418"
+    },
+    {
+      "path": "references/openclaw.md",
+      "sha256": "53b827d25500b53a52e65082de9fb96ad8a073eaee3f3bcd710b0289761c7c2f"
+    },
+    {
+      "path": "references/part-modeling.md",
+      "sha256": "9327c38016d4e90b4f13715a0fd53cdb709421c700dee2f211576d9a9e13db77"
+    },
+    {
+      "path": "references/review.md",
+      "sha256": "7057f15dccbdc168c5c91d033c3e9e74d02271a33be82937681fa6843489781b"
+    },
+    {
+      "path": "references/solidworks-addin-host.md",
+      "sha256": "d88e68e68cdeb34361465999a6edbee35512700cbd716ccb43e052ce4c7b4763"
+    },
+    {
+      "path": "references/troubleshooting.md",
+      "sha256": "fb9ce1465d45e58b421253ced2a965fed715679f5d5326c29de0e8de87319a98"
+    },
+    {
+      "path": "subskills/autocad-automation/manifest.yaml",
+      "sha256": "728acf6f755e1bd54dc7ca21c98ae1c1a8d43995bd38130513df2db951bbed30"
+    },
+    {
+      "path": "subskills/autocad-automation/README.md",
+      "sha256": "0f45d0c0de7252dcca841c9827b12539e2eecd8ec93ff3f1b050136ea021ff71"
+    },
+    {
+      "path": "subskills/autocad-automation/SKILL.md",
+      "sha256": "9ae911c71a31dc656420d056b522321a0a30ccfe7a601902e07cbf5a56526ccf"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/manifest.yaml",
+      "sha256": "d443418166884d7dc21e64102dd3f2189f840db9372b0039d465a3855708c962"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/README.md",
+      "sha256": "4173c8a4126d5edd76cf87f61d9c5b3eee03eacaf561015a08918cb0e7d27133"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/SKILL.md",
+      "sha256": "32c01cecc2f10f6f86fe20de826ed014e33a2ab415ea6352ad608c8ebf715d85"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/manifest.yaml",
+      "sha256": "84c05a8bf5b100362ab539a2b7e9029f4164ef8e09ea22468fd4280a1b90c29f"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/README.md",
+      "sha256": "5481e024730c6219b1245278aad9943fc0de4558f2eea290152771003dcc1c73"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/SKILL.md",
+      "sha256": "37b93a2cd8e68f19dbf7a9ad510b59169cfb97fb1c70ec7c81797e6618a70524"
+    },
+    {
+      "path": "subskills/solidworks-threaded-holes/manifest.yaml",
+      "sha256": "de3090cbdab38124fd4c18eda22c1de7e23f28973d194206b17b53e969793d78"
+    },
+    {
+      "path": "subskills/solidworks-threaded-holes/README.md",
+      "sha256": "7115ffc50684465fe79211b67fc7222cde1553598aa116eb1e342fea57aa21a4"
+    },
+    {
+      "path": "subskills/solidworks-threaded-holes/SKILL.md",
+      "sha256": "03b1ef72ec3ebfd4f0cbfcc3b65f157b5ce26dd4efbfa6a0bb1daebad6f06c18"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/manifest.yaml",
+      "sha256": "d1d0aadc0a971b42bc029f3176e9501e91e5d995bb1ee71cce8191d040ee9fac"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/README.md",
+      "sha256": "916e21d9fcd817d7d1f2a33882598c4548a7ad9e71b3ffd1059f60eef1c0be64"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/SKILL.md",
+      "sha256": "c6c8df937f7b654ad1418130b1c6f55db1a8e0548a11a1964c57898f8ed356f8"
+    },
+    {
+      "path": "subskills/autocad-automation/evals/evals.json",
+      "sha256": "ca4b794a0d06df86019363c5bf632c501fc0618dba8a36efa9113e0e2afcdd3f"
+    },
+    {
+      "path": "subskills/autocad-automation/examples/draw_mounting_plate.py",
+      "sha256": "89fbed5aa22750ce7014b501e87497c1cce5b1cfce5acfef612cbb91322fddbd"
+    },
+    {
+      "path": "subskills/autocad-automation/references/api-lookup.md",
+      "sha256": "76528abf1e7cc328709a4750946e844a5507eff418ae3b61d1716bb994860b16"
+    },
+    {
+      "path": "subskills/autocad-automation/references/engineering-patterns.md",
+      "sha256": "e0db2027dcb9fccb5bf394fb8ea1a8a6d5b2470ce29594dc9c465fa8fbdc9f3e"
+    },
+    {
+      "path": "subskills/autocad-automation/references/troubleshooting.md",
+      "sha256": "1d3011f34ef6933e83bb83ad0af6717dec2b349a14ec59c28536855bf806a25c"
+    },
+    {
+      "path": "subskills/autocad-automation/scripts/acad_dotnet_preflight.py",
+      "sha256": "42f5acf59e7198964b45a478ecd247ca30ae5d1e5de39d993eba24b83ee386c5"
+    },
+    {
+      "path": "subskills/autocad-automation/scripts/acad_dotnet_regression.py",
+      "sha256": "01da53e5778e50b9bf2be2f4d6bc55ef57643f578edfddf740fdc0c480e9bfc1"
+    },
+    {
+      "path": "subskills/autocad-automation/scripts/acad_draw.py",
+      "sha256": "d32d3e94d4452bb961a1366281fb00cb1cba27bc0387fb41eacacc8a853996e7"
+    },
+    {
+      "path": "subskills/autocad-automation/scripts/acad_headless.py",
+      "sha256": "f07825006969fc2fcd5ede1f1a5a1510ed5d48d4a56298801afa2d3266d337a9"
+    },
+    {
+      "path": "subskills/autocad-automation/scripts/acad_preflight.py",
+      "sha256": "3cf7b26820e31a71b14b4095060972c3e683812f39e31fee487eb751e9ab2279"
+    },
+    {
+      "path": "subskills/autocad-automation/scripts/acad_preview.py",
+      "sha256": "a62b3418aa7490f474aeb6288e14de911003090801fe746908e9eb24f73e7872"
+    },
+    {
+      "path": "subskills/autocad-automation/scripts/acad_review.py",
+      "sha256": "c1b0471ee1237008cbb13f7be7805e642c176b977a17b33e30b44dec1ac6deb5"
+    },
+    {
+      "path": "subskills/autocad-automation/scripts/acad_session.py",
+      "sha256": "053acc7783213c55bc9466dd9417d5a7226e067513dc43df7e2cc80523b598f4"
+    },
+    {
+      "path": "subskills/autocad-automation/dotnet/CadStudio.AutoCAD2024/CadStudio.AutoCAD2024.csproj",
+      "sha256": "52afd02018b143724881c6c93c83bb0bc7ed20d5612a182b3c3bd94206c0221d"
+    },
+    {
+      "path": "subskills/autocad-automation/dotnet/CadStudio.AutoCAD2024/CadStudioCommands.cs",
+      "sha256": "0ae3257b3b4ea1b4aad3dc0bda826e14218300231fec9464aec68dea3e10a74c"
+    },
+    {
+      "path": "subskills/autocad-automation/dotnet/CadStudio.AutoCAD2024/NuGet.Config",
+      "sha256": "f545a7e2ea14ac53cdfb91217cae67b8ff14275313f6298f9a3331d205b6c948"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/references/api-lookup.md",
+      "sha256": "d23fac467ccf52b1f04f6fef8e9dfe5f11bf673ad3f1f34517378b885ad8f938"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/references/drawing.md",
+      "sha256": "0278b2c705d1b025cfa57f2e1ca290f9a6c88ff4f8a611606c0efd0cfdfa3e9a"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/references/review.md",
+      "sha256": "d4cc1d97224726c4ceade4630e86da355cb400b863d0591835cea7f4952cad78"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/schemas/drawing_spec.schema.json",
+      "sha256": "ca05ab09cd467394c399d030b7230b13876e4358ef6d78ef384e538aeaabaaf8"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/scripts/drawing_review.py",
+      "sha256": "8286795296a485a8fbca592fe62f3dedcdbf63424941d1ea307365d5cacad501"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/scripts/drawing_spec.py",
+      "sha256": "e22571f33899a35bda2fb7a933bb7a0e18102dbe70fd1d0ab389ebd0327e1120"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/scripts/drawing_workflow.py",
+      "sha256": "1273610c13397c60b3a5a67ff7eba727a32dbc712c7632def4fed7e8db36d482"
+    },
+    {
+      "path": "subskills/solidworks-engineering-drawing/scripts/__init__.py",
+      "sha256": "97c65b307462e3569c1291b249d1072f7ca1dc3745cdfb542810f69d95f769d9"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/agents/openai.yaml",
+      "sha256": "a1d5bf93f7a198a09db1f1294376194fae0ebb680ef4e3672a7a4616fdb16d6e"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/evals/evals.json",
+      "sha256": "9d0ef6b3bacec84dddcacfad82e1d8e3c1826e7eaf5922620907d8e4b3606ced"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/examples/cnc_mount_precision_params.json",
+      "sha256": "e8d39609dc8279d91f3ec9f3b083cfe7ed476df587e57298432f5d1f60fa5675"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/examples/open_source_corner_bracket_case.json",
+      "sha256": "4505dc764b5fc6433d3b628b315a1f4c776d9238d1da5f64abdad9047563f367"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/references/cnc-fillet-chamfer-lessons.md",
+      "sha256": "1075ad547e45d3c47c48cfd8fe088de526734e4863941e086f2d3a9095f9eb97"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/advanced_fillet_strategy.py",
+      "sha256": "bf59d94e229c5d18e10c9466a3e4e6d65d7fd5e903ea3b75d8b95eeaf08d90e7"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/cnc_strategy.py",
+      "sha256": "6b867efa55643575c7a22a3d767f963c89f07cc730ef926fd70e164533ab8fa7"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/create_cnc_mount_template.py",
+      "sha256": "ebce61482c6eca7fcff184aed47d66cca8ccac988bd03fa9bcaf203d926e9be7"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/hold_line_bridge.py",
+      "sha256": "ff479e00db9bd76b4ed5d24e453fc7f483b77007d74beaa6e358c18d2c69b0a3"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/verify_advanced_fillets.py",
+      "sha256": "7e84d76641e17efc08ba89719139a5456467a5595739815f0b10e3145632cdf7"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/verify_open_source_bracket.py",
+      "sha256": "ae734d5cafd52c4b1f4a573c7dcf26387ce1978d1318fd70704cccf6a8c66dd4"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/verify_open_source_complex_case.py",
+      "sha256": "4a710582ddbac8c5ad56bcc550cb9508f46d38cf288b47f3d02dfd480b067452"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/native/HoldLineBridge.cs",
+      "sha256": "8d5ecfc583f0922e49ff75c0842a0812e4555d04e966ba6b9b5567497daf387e"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/native/NativeHoldLineAddin.cpp",
+      "sha256": "58bef177a5de0556c9b1a9bd98a2d1ff0b47f4711de30e5f947dc8f9c5d780c1"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/native/NativeHoldLineAddin.def",
+      "sha256": "93969c1df0d41bac52917390f0bfad21b0de14f799aa220707c454a9c2fb01e9"
+    },
+    {
+      "path": "subskills/solidworks-fillet-chamfer-cnc/scripts/native/NativeHoldLineMacro.swb",
+      "sha256": "bd94aa29751ca7bda273682d9eb1c1da08dd92f5c47dbe694ee26c67481fe0bf"
+    },
+    {
+      "path": "subskills/solidworks-threaded-holes/agents/openai.yaml",
+      "sha256": "ad07070312c3d81babc28fca14a4f2f274552b21a5288d07602e1aeb6fb3aa92"
+    },
+    {
+      "path": "subskills/solidworks-threaded-holes/references/threaded-hole-lessons.md",
+      "sha256": "23147cc1547bd76cb41d970ce409e2410890c79e216552acd3b1abc16ef6c1c8"
+    },
+    {
+      "path": "subskills/solidworks-threaded-holes/references/threaded-hole-roadmap.md",
+      "sha256": "76fd2827f0ead32bd7fd1517acd43d9f49a9cca3e83d38409da10bf47dd41efc"
+    },
+    {
+      "path": "subskills/solidworks-threaded-holes/scripts/create_threaded_hole_template.py",
+      "sha256": "c53d8c14129bebcdbce781774b14a83a3d3b8eaed49fd469266cf04c9f149902"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/examples/motor_mount_brief.txt",
+      "sha256": "ac60f57e8718f02a3de01aa452400a0c6955b2a99a0a7872ad391dbb1ad850d0"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/examples/motor_mount_execution.md",
+      "sha256": "6b18ab57529e9b0bdf892551d7542abc1da78ec466c1c08c3d6f290a5382fae5"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/examples/motor_mount_plan.json",
+      "sha256": "8e270f6b09463479203d7679e6cf2c3ef7f2d3ba9747b15805f12c81f829ae48"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/knowledge/manufacturing_rules.yaml",
+      "sha256": "cb68acbe2c6000c5c9764b931127f40ddb649e58d7e5dcfaa7cea42427679e9b"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/prompts/solidworks_parametric_planner.md",
+      "sha256": "7106e546fefeb6b34e9303702004fd014bc6b041367d0ea0137a4afde016d854"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/references/vibecad-roadmap.md",
+      "sha256": "021817f69b0d4911bc39e9413057c1135625072e1f228d1a1f21b825f820fdc6"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/schemas/design_plan.schema.json",
+      "sha256": "3444b9f21bb0a50851353853a8749350bef3f86babb7978ed6bc62f1723bc377"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/scripts/plan_from_brief.py",
+      "sha256": "2d00187b5555774e0a4525a2144d9afa7d8a4a205011d8c88a73e8713468ca32"
+    },
+    {
+      "path": "subskills/solidworks-vibecad/scripts/sw_execution_outline.py",
+      "sha256": "3dc642c65dbd22411a1619f427d4caeeaffc10fae9c0776afddab90470f29561"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c4fdf46b5ebb48917864deffb876ef098af2d7ac7392616c9015e1a4cf6af862"
+    },
+    {
+      "path": "capabilities.yaml",
+      "sha256": "00321e30650c3ca98797368ebe087aa09678e6ae973bc25225770b1504375479"
+    },
+    {
+      "path": "project.yaml",
+      "sha256": "baaf8808aa55bcbedbfe6d40304e05a8538e82cce52b47944e16ea3bd0d961c6"
+    },
+    {
+      "path": "package.json",
+      "sha256": "3366300e8fa0d422c9e21b41bd110134c0406386bf65a5c6e19f99f5de4db660"
+    },
+    {
+      "path": "apps/desktop/__init__.py",
+      "sha256": "2b690db927d7cd778d631e83e077301b3e7f725bd1b6a008d31787957e8f541a"
+    }
+  ],
+  "provenance_note": "Original snapshot hashes; patched files described in PATCHES.md."
+}

@@ -1,0 +1,17 @@
+--- upstream/sw_native_wire.cs
++++ local/sw_native_wire.cs
+@@ -26,6 +26,14 @@
+   // @brief 部分 2026 实例仅注册标准活动对象；只有 PID 与宿主完全一致才允许使用。
+   try{var active=(ISldWorks)Marshal.GetActiveObject("SldWorks.Application");if(active.GetProcessID()==pid)return active;}
+   catch(COMException){}
++  // SW2024 on this host exposes its class factory without an application ROT
++  // entry. Only bind when there is one existing process, with matching PID/year.
++  var processes=System.Diagnostics.Process.GetProcessesByName("SLDWORKS");
++  if(processes.Length==1&&processes[0].Id==pid){
++   var type=Type.GetTypeFromProgID("SldWorks.Application.32",true);
++   var active=(ISldWorks)Activator.CreateInstance(type);
++   if(active.GetProcessID()==pid&&active.RevisionNumber().StartsWith("32."))return active;
++  }
+   throw new Exception("Requested process unavailable");
+  }
+  static IModelDoc2 Guard(ISldWorks sw,string path){var d=(IModelDoc2)sw.ActiveDoc;if(d==null||string.IsNullOrEmpty(d.GetPathName())||!Same(d.GetPathName(),path))throw new Exception("Active document target mismatch");return d;}

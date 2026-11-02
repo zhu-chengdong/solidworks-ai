@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="app-token" content="__APP_TOKEN__">
+  <title>科研自动化 · SolidWorks</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">研</span><div><strong>科研自动化</strong><small>本机工作台</small></div></div>
+    <button class="new-task" id="new-task">新建任务</button>
+    <div class="module-label">当前模块</div>
+    <nav id="modules" aria-label="科研模块"><div class="module active">SolidWorks 助手</div></nav>
+    <div class="history-label">最近任务</div>
+    <nav id="history" aria-label="最近任务"></nav>
+    <div class="sidebar-bottom">
+      <button class="settings-link" id="settings-open">模型与密钥</button>
+      <div class="local-note"><span class="status-dot"></span>服务仅在本机运行</div>
+    </div>
+  </aside>
+  <main>
+    <header class="topbar"><div><h1>SolidWorks 助手</h1><p>描述需求，查看方案与实际结果</p></div><div class="topbar-actions"><button class="mobile-new" id="new-task-mobile">新建任务</button><span class="service-status" id="service-status">正在连接本机服务</span></div></header>
+    <div class="model-strip"><span>理解与规划 <b id="planner-badge">—</b></span><i></i><span>执行操作 <b id="executor-badge">—</b></span><button id="models-edit">更改</button></div>
+    <section class="workspace" id="workspace" aria-live="polite">
+      <div class="welcome" id="welcome">
+        <div class="eyebrow">从一句需求开始</div>
+        <h2>把设计需求直接告诉我</h2>
+        <p>描述零件或装配需求，也可以添加参考图片和已有零件文件。先明确尺寸与配合，再调用 SolidWorks。</p>
+        <div class="setup-notice" id="setup-notice" hidden><div><strong>先填写一次 API Key</strong><span>在设置里保存后，就可以直接输入需求。</span></div><button id="setup-open">打开设置</button></div>
+        <div class="examples">
+          <button data-example="创建一个边长10毫米的实心立方体，保存零件、导出STEP并检查尺寸。"><strong>创建立方体</strong><span>边长 10 毫米，保存并检查</span></button>
+          <button data-example="创建一个半径10毫米、高20毫米的实心圆柱，保存并导出STEP。"><strong>创建圆柱</strong><span>半径 10 毫米，高 20 毫米</span></button>
+          <button data-example="根据我上传的飞机图片创建三维卡通飞机，尺寸按比例估算，保留机身、机翼、尾翼和窗户并配色，保存原生文件和STEP。" data-reference-mode="approximate"><strong>图片建卡通飞机</strong><span>上传图片，按比例估形并配色</span></button>
+          <button data-example="创建一块80×60×8毫米的安装板，以板中心为XY原点，在(±30,±20)毫米四处各开直径5.5毫米的贯穿孔。保存原生零件、STEP并核对全部尺寸。"><strong>安装板与孔位</strong><span>结构化尺寸，创建后可继续修改</span></button>
+          <button data-example="创建两块相同的80×60×8毫米孔板，以中心为XY原点，在(±30,±20)毫米各开直径5.5毫米通孔。沿Z叠放，板面净间隙10毫米。底板固定，上板用真实配合定位，孔轴对齐；检查干涉，保存装配体、全部零件、STEP和BOM，并打包交付。"><strong>组装两块孔板</strong><span>真实配合、干涉检查与完整打包</span></button>
+        </div>
+        <div class="workflow-intro"><span>理解需求</span><em>→</em><span>制定方案</span><em>→</em><span>执行操作</span><em>→</em><span>核对结果</span></div>
+      </div>
+      <div id="conversation" class="conversation" hidden></div>
+    </section>
+    <footer class="composer-wrap">
+      <div id="notice" class="notice" role="status" hidden></div>
+      <form id="chat-form" class="composer">
+        <div id="attachments" class="attachments" aria-live="polite"></div>
+        <div class="reference-controls"><button type="button" id="upload-button">添加参考图片</button><input id="image-files" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden><button type="button" id="cad-upload-button">添加零件文件</button><input id="cad-files" type="file" accept=".sldprt" multiple hidden><label for="reference-mode">建模方式</label><select id="reference-mode"><option value="dimensions">按尺寸建模</option><option value="approximate">外观尝试，允许估计比例</option></select></div>
+        <label class="sr-only" for="message">输入设计需求</label>
+        <textarea id="message" rows="2" placeholder="描述设计需求，或上传图片并补充尺寸。"></textarea>
+        <div class="composer-actions"><span id="composer-hint">Enter 发送，Shift + Enter 换行</span><button type="button" id="stop-task" class="stop" hidden>停止任务</button><button type="submit" id="send-task" class="primary">发送需求</button></div>
+      </form>
+      <div class="footer-note">通过本机 MCP 操作 SolidWorks · 输出保存在独立任务目录 <button id="quit-app">退出应用</button></div>
+    </footer>
+  </main>
+
+  <dialog id="settings-dialog">
+    <div class="dialog-head"><div><h2>模型与密钥</h2><p>保存一次，之后直接输入自然语言。</p></div><button id="settings-close" aria-label="关闭设置">关闭</button></div>
+    <div class="settings-body">
+      <section class="settings-section"><div class="section-number">01</div><div class="section-content"><h3>API 密钥</h3><p>密钥保存在本机安全存储，不写入普通配置文件。</p>
+        <label for="key-provider">供应商</label><select id="key-provider"><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option><option value="custom">其他兼容 API</option></select>
+        <div class="key-state" id="key-state"></div>
+        <label for="api-key">API Key</label><input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴你已有的完整 API Key">
+        <div class="field-foot"><span>已保存时，留空即可保持原密钥。</span><button id="remove-key" type="button" hidden>移除本机密钥</button></div>
+        <details id="provider-advanced"><summary>服务地址与接口类型</summary><label for="base-url">API 地址</label><input id="base-url" type="url" spellcheck="false"><label for="api-style">接口类型</label><select id="api-style"><option value="responses">OpenAI Responses</option><option value="chat_completions">OpenAI Chat Completions 兼容接口</option></select></details>
+      </div></section>
+      <section class="settings-section"><div class="section-number">02</div><div class="section-content"><h3>两个模型分工</h3><p>理解模型负责方案和复核，执行模型负责调用工具。发送需求后，任务内容、参考图片、检查结果及预览会发送给所选模型。</p>
+        <div class="role-card"><div><strong>理解与规划</strong><small>适合使用能力较强的模型</small></div><div class="role-fields"><select id="planner-provider" aria-label="理解模型供应商"></select><input id="planner-model" aria-label="理解模型名称" spellcheck="false"></div></div>
+        <label for="planner-effort">规划与复核思考强度</label><select id="planner-effort"><option value="auto">沿用默认分工</option><option value="none">关闭思考</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">MAX（最高）</option></select>
+        <label class="vision-option"><input id="planner-vision" type="checkbox">该理解模型支持图片输入</label>
+        <div class="role-card"><div><strong>执行操作</strong><small>负责原生工具调用与执行结果说明</small></div><div class="role-fields"><select id="executor-provider" aria-label="执行模型供应商"></select><input id="executor-model" aria-label="执行模型名称" spellcheck="false"></div></div>
+        <label for="executor-effort">执行思考强度</label><select id="executor-effort"><option value="auto">沿用默认分工</option><option value="none">关闭思考</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">MAX（最高）</option></select><p class="small-note">DeepSeek支持关闭、Low、High和MAX；实际支持以所选模型API为准，失败时不会自动降低强度。MAX模式会等待更长时间，Token按实际用量记录。</p>
+        <details><summary>任务执行设置</summary><label for="max-turns">最多执行轮数</label><input id="max-turns" type="number" min="2" max="30"><p class="small-note">达到上限时停止继续操作，并保留已经生成的文件。</p></details>
+      </div></section>
+      <div id="settings-notice" class="settings-notice" role="status" hidden></div>
+      <div id="connection-results"></div>
+    </div>
+    <div class="dialog-foot"><button id="settings-save" type="button">仅保存设置</button><button id="test-models" type="button" class="primary">保存并测试</button></div>
+  </dialog>
+</body>
+</html>
