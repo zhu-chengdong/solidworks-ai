@@ -11,7 +11,7 @@ import secrets
 import socket
 import threading
 import time
-from urllib.parse import unquote, urlsplit
+from urllib.parse import unquote, urlsplit, parse_qs
 import urllib.request
 import webbrowser
 
@@ -23,7 +23,7 @@ from .reference_inputs import ReferenceStore, MAX_IMAGE_BYTES
 from .cad_inputs import CadStore,MAX_CAD_BYTES
 from .drawing_inputs import DrawingStore,MAX_DRAWING_BYTES
 
-VERSION = "0.7.0-rc3"
+VERSION = "0.8.0-rc1"
 WEB_ROOT = Path(__file__).resolve().parent / "web"
 APP_ID = "local-solidworks-research-workbench"
 
@@ -105,9 +105,12 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True, "app": APP_ID, "version": VERSION})
             elif path == '/api/drawing-example':
                 import io
-                from drawing2cad.examples import stepped_block
-                stream=io.StringIO();stepped_block(None).write(stream)
-                self.send_bytes(stream.getvalue().encode('utf-8'),'application/dxf',download='three-views-blind-counterbore.dxf')
+                from drawing2cad.examples import stepped_block,analytic_housing
+                variant=parse_qs(urlsplit(self.path).query).get('kind',['steps'])[0]
+                if variant not in {'steps','sloped','curved'}:raise UserFacingError('示例类型不存在。')
+                drawing=stepped_block(None) if variant=='steps' else analytic_housing(None,curved=variant=='curved')
+                stream=io.StringIO();drawing.write(stream)
+                self.send_bytes(stream.getvalue().encode('utf-8'),'application/dxf',download={'steps':'three-views-blind-counterbore.dxf','sloped':'sloped-side-holes-countersinks.dxf','curved':'curved-arch-drill-point.dxf'}[variant])
             elif path == "/api/state":
                 self.send_json({"version": VERSION, "settings": self.server.settings.public(),
                     "jobs": self.server.manager.list(), "active_job": self.server.manager.active,

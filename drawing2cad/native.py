@@ -113,7 +113,7 @@ def build_drawing(app,spec_path,allowed_root):
     output,step_path=artifact_paths(task)
     if output.exists():raise ValueError('Existing native model cannot be replaced')
     automation=native_automation(app)
-    if spec.get('kind') in {'orthographic','profile_holes'}:
+    if spec.get('kind') in {'orthographic','profile_holes','orthographic_analytic'}:
         from .native_advanced import build
         return build(app,automation,spec,task,source,request['source_sha256'])
     made=automation.create_new_part()

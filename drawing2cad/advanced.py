@@ -115,35 +115,58 @@ def _hole_notes(data,view,opts):
         if overrides:
             extra=overrides[-1]
             if re.search(r'DIA|[Ø⌀]',extra,re.I):text=hole_id+' '+extra
+            elif re.search(r'CSK|COUNTERSINK|沉头|POINT|钻尖|锥底',text,re.I) and re.search(r'DEPTH|深|ANGLE|角|POINT|钻尖',extra,re.I):
+                raise DrawingError(f'{hole_id}包含锥形特征，请完整补充直径、孔深定义及夹角，不能只覆盖其中一个数值。')
             elif re.search(r'CBORE|COUNTERBORE|沉孔|⌴',text,re.I) and re.search(r'DEPTH|深|↧',extra,re.I):
                 raise DrawingError(f'{hole_id}有两级孔深，请完整补充底孔和沉孔规格，例如“H3 DIA8 BLIND DEPTH20 CBORE DIA14 DEPTH6”。')
             else:text+=' '+extra
         text=text.replace('%%c','DIA').replace('%%C','DIA').replace('Φ','Ø').replace('φ','Ø').replace('直径','DIA')
         factor=data['mm_per_unit'];radii=sorted(g['radii'])
         dia=[float(v)*factor for v in re.findall(r'(?:DIA(?:METER)?|[Ø⌀])\s*([0-9]+(?:\.[0-9]+)?)',text,re.I)]
-        cb=re.search(r'CBORE|COUNTERBORE|沉孔|⌴',text,re.I)
+        cb=re.search(r'CBORE|COUNTERBORE|沉孔|⌴|\bCSK\b|COUNTERSINK|沉头',text,re.I)
+        if len(re.findall(r'CBORE|COUNTERBORE|沉孔|⌴|\bCSK\b|COUNTERSINK|沉头',text,re.I))>1:raise DrawingError(f'{hole_id}包含多个沉孔/沉头要求，请明确各级结构。')
+        csk=bool(cb and re.search(r'CSK|COUNTERSINK|沉头',cb[0],re.I))
         base_text=text[:cb.start()] if cb else text
         blind=bool(re.search(r'BLIND|盲孔|不贯穿|非通孔|非贯穿|不(?:是)?通孔|NOT\s+THR(?:OUGH|U)|DEPTH|深|↧',base_text,re.I));through=bool(re.search(r'THRU|THROUGH|通孔|贯穿',base_text,re.I)) and not blind
         depths=[float(v)*factor for v in re.findall(r'(?:DEPTH|深(?:度)?|↧)\s*([0-9]+(?:\.[0-9]+)?)',text,re.I)]
         if not text and len(radii)==1 and opts['through']:through=True;dia=[2*radii[0]]
         if not dia or abs(dia[0]-2*radii[0])>1e-4:questions.append(f'{hole_id}缺少或冲突的孔径标注，请用引线关联DIA/Ø直径。');continue
         if cb:
-            if len(radii)!=2 or len(dia)!=2 or abs(dia[1]-2*radii[1])>1e-4:questions.append(f'{hole_id}沉孔需要两级同心圆和匹配的两级直径标注。');continue
+            if len(radii)!=2 or len(dia)!=2 or abs(dia[1]-2*radii[1])>1e-4:questions.append(f'{hole_id}'+('沉头孔' if csk else '沉孔')+'需要两级同心圆和匹配的两级直径标注。');continue
             before,after=text[:cb.start()],text[cb.end():]
             cbdepth=re.findall(r'(?:DEPTH|深(?:度)?|↧)\s*([0-9]+(?:\.[0-9]+)?)',after,re.I)
             basedepth=re.findall(r'(?:DEPTH|深(?:度)?|↧)\s*([0-9]+(?:\.[0-9]+)?)',before,re.I)
-            if not cbdepth or (not through and not basedepth):questions.append(f'{hole_id}请补充底孔深度/贯穿状态和沉孔深度。');continue
-            depth=float(basedepth[-1])*factor if basedepth else None;cb_depth=float(cbdepth[-1])*factor
+            angle=re.search(r'(?:ANGLE|角(?:度)?)\s*([0-9]+(?:\.[0-9]+)?)',after,re.I) if csk else None
+            if (csk and not angle) or (not csk and not cbdepth) or (not through and not basedepth):questions.append(f'{hole_id}请补充底孔深度/贯穿状态和'+('沉头夹角。' if csk else '沉孔深度。'));continue
+            if csk and not 10<float(angle[1])<170:raise DrawingError(f'{hole_id}沉头夹角必须在10至170度之间。')
+            depth=float(basedepth[-1])*factor if basedepth else None
+            cb_depth=(radii[1]-radii[0])/math.tan(math.radians(float(angle[1]))/2) if csk else float(cbdepth[-1])*factor
+            if csk and cbdepth and abs(float(cbdepth[-1])*factor-cb_depth)>.01:raise DrawingError(f'{hole_id}沉头直径、夹角和深度不一致。')
         else:
             if len(radii)!=1:questions.append(f'{hole_id}同心圆未注明沉孔或沉头规格，不能推断。');continue
             if not through and not (blind and depths):questions.append(f'{hole_id}请注明盲孔深度或通孔状态，例如“H1 BLIND DEPTH10”。');continue
             depth=depths[-1] if blind else None;cb_depth=None
-        notes.append({'id':hole_id,'center_drawing_mm':g['center'],'radius_mm':radii[0],'through':through,'depth_mm':depth,'counterbore_radius_mm':radii[-1] if cb else None,'counterbore_depth_mm':cb_depth,'source_text':text,'leader_handle':g.get('leader_handle'),'kind':'counterbore' if cb else 'through' if through else 'blind'})
+        point=re.search(r'(?:POINT(?:\s*ANGLE)?|钻尖(?:角(?:度)?)?|锥底(?:角(?:度)?)?)\s*([0-9]+(?:\.[0-9]+)?)',text,re.I)
+        tip_angle=float(point[1]) if point else None
+        if re.search(r'POINT|钻尖|锥底',text,re.I) and not point:questions.append(f'{hole_id}请给出钻尖夹角。');continue
+        if point and re.search(r'FLAT[ _-]?BOTTOM|平底',text,re.I):raise DrawingError(f'{hole_id}同时要求平底和钻尖，请明确底形。')
+        if tip_angle is not None and (through or not 10<tip_angle<170):raise DrawingError(f'{hole_id}钻尖只适用于盲孔，夹角必须在10至170度之间。')
+        tip_height=radii[0]/math.tan(math.radians(tip_angle)/2) if point else 0.
+        if point:
+            total=bool(re.search(r'TOTAL\s*DEPTH|总深',base_text,re.I));cyl=bool(re.search(r'CYL(?:INDER)?\s*DEPTH|圆柱(?:段)?深',base_text,re.I))
+            if not total and not cyl:questions.append(f'{hole_id}请明确深度是圆柱段深度（CYL DEPTH）还是含钻尖总深度（TOTAL DEPTH）。');continue
+            if total and cyl:raise DrawingError(f'{hole_id}同时给出两种深度定义，请只保留一种。')
+            if total:depth-=tip_height
+        elif not through and not re.search(r'FLAT[ _-]?BOTTOM|平底',text+' '+opts.get('request_text','')+' '+' '.join(a['text'] for a in data['annotations'] if not re.search(r'\bH\d+\b',a['text'],re.I)),re.I):
+            questions.append(f'{hole_id}请确认平底，或注明钻尖角度和深度定义。');continue
+        notes.append({'id':hole_id,'center_drawing_mm':g['center'],'radius_mm':radii[0],'through':through,'depth_mm':depth,'counterbore_radius_mm':radii[-1] if cb else None,'counterbore_depth_mm':cb_depth,'countersink_angle_deg':float(angle[1]) if csk else None,'drill_point_angle_deg':tip_angle,'drill_point_height_mm':tip_height,'source_text':text,'leader_handle':g.get('leader_handle'),'kind':'countersink' if csk else 'counterbore' if cb else 'through' if through else 'blind'})
     if len({n['id'] for n in notes})!=len(notes):raise DrawingError('孔标注编号重复，请给每个孔唯一H编号。')
     return notes,questions
 
 
 def plan_advanced(data,opts):
+    from .analytic import needs_analytic,plan_analytic
+    if needs_analytic(data,opts):return plan_analytic(data,opts)
     text=' '.join(a['text'] for a in data['annotations'])+' '+opts.get('request_text','')
     if re.search(r'\bCSK\b|COUNTERSINK|沉头|锥底|锥孔|螺纹|\bTHREAD',text,re.I):raise DrawingError('图纸含沉头、锥底或螺纹要求，当前深度入口仅支持平底盲孔和圆柱沉孔，不能省略这些要求后继续。')
     three=bool(re.search('三视图',text)) or all(re.search(p,text,re.I) for p in ROLES.values())

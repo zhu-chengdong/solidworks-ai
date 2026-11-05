@@ -74,7 +74,8 @@ class OrthographicTests(unittest.TestCase):
         data=inspect_dxf(self.drawing())
         for a in data['annotations']:
             if a['text'].startswith('H1 '):a['text']='H1 CSK DIA8 DEPTH12'
-        with self.assertRaisesRegex(DrawingError,'沉头'):select_spec(data,options('按三视图重建'))
+        spec,question=select_spec(data,options('按三视图重建'))
+        self.assertIsNone(spec);self.assertIn('沉头',question)
     def test_chinese_diameter_and_depth_notation(self):
         data=inspect_dxf(self.drawing())
         for a in data['annotations']:

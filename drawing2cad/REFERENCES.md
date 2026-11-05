@@ -29,8 +29,22 @@
 - 工作台可直接下载自产示例DXF，带六个主要尺寸、孔位表、隐藏线及五条孔引线。示例为本项目自行绘制，不属于用户科研CAD。
 - 隐藏线也必须关联到已识别孔在对应视图中的投影范围。未知内部轮廓或孔深修改与原隐藏线冲突时，在原生写入前停止并请求剖视/特征说明，不能将它们默认为实心。
 
-未覆盖任意三视图曲面重建、斜面/曲线三视图外形、侧向孔、钻尖/锥底、沉头孔、螺纹和装配重建。DWG纸空间布局、外部参照、三维多段线、样条、倾斜坐标系及无法确定的嵌套岛不自动修补。PDF作为图片输入，仍需要视觉模型和尺寸确认，不能与DXF/DWG精度等同。
+0.8.0新增斜面、圆弧三视图与三方向锥形孔路径：
+
+- 三个正交外轮廓定义棱柱交集。TOP精确轮廓先拉伸，再用FRONT/RIGHT轮廓执行原生双向外侧贯穿切除。原始LINE/ARC/CIRCLE是建模输入，采样折线只用于拓扑识别、投影验证和预览。一般组合采用解析截面区间的有界自适应积分核对体积；单轮廓棱柱使用解析面积乘长度。
+- 圆弧外轮廓混有内部可见线时，先分析拓扑，再找回完整的原始圆弧。原曲线只有部分属于外边界时要求先在CAD交点处分割，不以采样边替代。
+- 孔在TOP沿−Z、FRONT沿+Y、RIGHT沿−X进入。入口必须位于完整平面，贯穿出口也要求完整平面；检查局部材料、底壁与孔段包络。无法确定的相交孔、跨曲面孔及反向/斜向孔不猜测。
+- 钻尖盲孔示例为`H1 DIA8 BLIND CYL DEPTH18 POINT118`或`TOTAL DEPTH20 POINT118`，分别表示圆柱段深度和含钻尖总深度。钻尖高度由半径除以半夹角正切计算。沉头示例为`H2 DIA6.6 THRU CSK DIA13 ANGLE90`，需两级同心圆、两级直径与明确夹角，显式深度必须与几何一致。
+- 钻尖及沉头以原生旋转切除建立解析圆锥面。保存重开后检查真实旋转角度、圆锥半夹角、端部圆半径与轴向位置，以及原生修剪锥面的顶点最近点；不是把期望参数重新打印成验收结果。圆柱孔区间、终止方式、体积、极值尺寸、完全定义和零Fix仍须通过。
+- 曲线三视图复核由实际B-Rep边及位于修剪圆柱面上的切向母线生成投影。验证采样弦差目标0.002毫米，允许的投影Hausdorff距离0.025毫米；每份报告记录数值。这是投影核验容差，不能等同于制造公差，模型本体仍为原生精确几何。
+- 一般三视图只能确定外形视觉包络，不能唯一恢复未标出的内部结构。隐藏线必须与已定义的孔投影一致；未解释的内部结构会停止并要求剖视。原生投影不一致的模型不得交付为已通过。
+
+原生API依据包括[FeatureCut4](https://help.solidworks.com/2024/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SOLIDWORKS.Interop.sldworks.IFeatureManager~FeatureCut4.html)、[FeatureRevolve2](https://help.solidworks.com/2024/english/api/sldworksapi/solidworks.interop.sldworks~solidworks.interop.sldworks.ifeaturemanager~featurerevolve2.html)、[IEdge.Evaluate2](https://help.solidworks.com/2024/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SOLIDWORKS.Interop.sldworks.IEdge~Evaluate2.html)及[ISurface.ConeParams2](https://help.solidworks.com/2024/english/api/sldworksapi/SOLIDWORKS.Interop.sldworks~SOLIDWORKS.Interop.sldworks.ISurface~ConeParams2.html)。这些接口在本地2024环境中单独验证，不据其他年份的上游能力表宣称兼容。
+
+仍未覆盖任意自由曲面三视图重建、螺纹和装配重建。DWG纸空间布局、外部参照、三维多段线、样条、倾斜坐标系及无法确定的嵌套岛不自动修补。PDF作为图片输入，仍需要视觉模型和尺寸确认，不能与DXF/DWG精度等同。
 
 测试件为本项目自建圆角板，120×80×8毫米、四个Ø8通孔及30×12毫米长圆槽；不是用户研究项目的CAD数据。实际验收与失败尝试保存在本机artifacts/runtime，均不进入源码或EXE发布包。
 
 0.7.0测试补充阶梯件120×80×36毫米，基座厚12毫米，后侧凸台80×32×24毫米。五个孔覆盖两处不同台阶的盲孔、普通通孔、通底沉孔和盲底沉孔。另一份圆角孔板为100×70×20毫米，验证圆弧外轮廓、缺深度澄清及深度补充。实际验收以对应发行版release-acceptance.json为准。
+
+0.8.0测试图为自产斜面壳座120×80×50毫米与圆弧拱座100×60×60毫米，包含真实DIMENSION、LEADER和孔径/深度/角度标注，不使用嵌入的特征JSON。斜面图覆盖X/Y/Z三方向孔及82°、90°沉头、118°钻尖；圆弧图覆盖R50拱顶、侧向通孔/平底沉孔与含钻尖总深度。实际保存重开及EXE验证结果以对应发行包验收记录为准。

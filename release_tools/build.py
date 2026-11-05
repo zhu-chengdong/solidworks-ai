@@ -43,7 +43,12 @@ def copy_public(destination):
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
-    shutil.copy2(ROOT/'release_tools/README_PUBLIC.md', destination/'README.md')
+    shutil.copy2(ROOT/'release_tools/README_EN_PUBLIC.md', destination/'README.md')
+    shutil.copy2(ROOT/'release_tools/README_ZH_PUBLIC.md', destination/'README.zh-CN.md')
+    shutil.copy2(ROOT/'release_tools/CHANGELOG_EN.md', destination/'CHANGELOG.md')
+    shutil.copy2(ROOT/'release_tools/CHANGELOG.md', destination/'CHANGELOG.zh-CN.md')
+    for name,old,new in [('CHANGELOG.md','(CHANGELOG.md)','(CHANGELOG.zh-CN.md)'),('CHANGELOG.zh-CN.md','(CHANGELOG_EN.md)','(CHANGELOG.md)')]:
+        p=destination/name;p.write_text(p.read_text(encoding='utf8').replace(old,new),encoding='utf8')
     shutil.copy2(ROOT/'requirements-desktop.txt', destination/'requirements.txt')
     manifest = json.loads((ROOT/'vendor/source-manifest.json').read_text(encoding='utf-8'))
     manifest['source'] = 'https://github.com/wzyn20051216/solidworks-automation-skill'
@@ -119,6 +124,7 @@ def main():
             str(source/'release_tools/desktop.spec')],cwd=source,check=True)
         bundle=release/'windows'/'SolidWorksAI'
         for name,origin in [('README.md','README.md'),('LICENSE','LICENSE'),
+            ('README.zh-CN.md','README.zh-CN.md'),('CHANGELOG.md','CHANGELOG.md'),('CHANGELOG.zh-CN.md','CHANGELOG.zh-CN.md'),
             ('THIRD_PARTY_NOTICES.md','release_tools/THIRD_PARTY_NOTICES.md')]:
             shutil.copy2(source/origin,bundle/name)
         dependency_notices(bundle)

@@ -1,10 +1,14 @@
 # SolidWorks AI
 
+[English](README.md) | 简体中文
+
+[完整更新记录](CHANGELOG.zh-CN.md) · [全部历史版本与下载](https://github.com/zhu-chengdong/solidworks-ai/releases)
+
 ## 下载与开始使用
 
-**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.7.0-rc3/SolidWorksAI-0.7.0-rc3-windows-x64.zip)**
+**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.8.0-rc1/SolidWorksAI-0.8.0-rc1-windows-x64.zip)**
 
-当前版本为 **0.7.0-rc3 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.7.0-rc3)。
+当前版本为 **0.8.0-rc1 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.8.0-rc1)。
 
 1. 准备 Windows 64 位电脑，并安装、激活 SolidWorks 2024。
 2. 点击上面的下载链接，下载后右键压缩包，选择“全部解压缩”。
@@ -21,6 +25,18 @@ GitHub 的 `Code → Download ZIP` 下载的是开发源码；直接使用程序
 这是 Windows x64 的预发布候选版，当前验证目标为 SolidWorks 2024。它不是
 SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年份尚未验收。
 
+
+## 版本历史
+
+| 版本 | 主要更新 |
+| --- | --- |
+| [0.8.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.8.0-rc1) | 斜面与圆弧三视图、三方向孔、钻尖、沉头；中英文说明 |
+| [0.7.0-rc3](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.7.0-rc3) | 阶梯三视图、平底盲孔、圆柱沉孔及原生回读 |
+| [0.6.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.6.0-rc1) | DXF/DWG精确建模与PDF上传 |
+| [0.4.0-rc13](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.4.0-rc13) | 三视图朝向与标识、自动补图复核及历史交付 |
+
+旧版发行说明、标签及安装包保留。详细变更见[更新记录](CHANGELOG.zh-CN.md)。
+
 ## 普通用户
 
 ### 二维图纸生成三维零件
@@ -30,14 +46,14 @@ SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年
 “使用视图1”即可继续。这个受限流程无需配置API Key，Token消耗为0。
 
 三视图可输入“按三视图及孔标注建模”。需要FRONT/TOP/RIGHT或中文视图标识，亦可在对话中指定编号。
-当前联合重建覆盖直角阶梯外形；平底盲孔、通孔和圆柱沉孔按俯视图沿Z向创建，分别读取局部入口面和孔深。
+联合重建覆盖直角阶梯、斜面和圆弧轮廓的正交棱柱交集；平底盲孔、通孔和圆柱沉孔支持TOP/Z、FRONT/Y、RIGHT/X三方向，分别读取局部平面入口与孔深。
 例如图纸孔引线标注`H1 DIA8 BLIND DEPTH12`或`H2 DIA6.6 THRU CBORE DIA13 DEPTH5`。
-缺少深度或盲孔底形先询问；程序不把同心圆直接猜成沉孔。页面提供可下载的完整示例图纸。
+钻尖标注例如`H1 DIA8 BLIND CYL DEPTH18 POINT118`或`TOTAL DEPTH20 POINT118`；沉头例如`H2 DIA6.6 THRU CSK DIA13 ANGLE90`。圆柱段深度与含钻尖总深度分开处理，缺少孔深、底形、深度定义或夹角先询问。页面提供阶梯、斜面侧孔和圆弧钻尖三份示例图纸。
 
 单视图继续支持等厚拉伸件、精确直线/圆弧、圆孔和贯穿闭合槽，保留图纸原文件。
 DWG由本机SolidWorks原生转换，只读取Model空间；已处理原生导出打散孔引线的情况。
 程序核对单位、标注冲突、保存重开后的孔深、圆柱段和平底、三视图投影及草图可编辑性。
-斜面或曲线三视图外形、侧向孔、钻尖/锥底、沉头孔、螺纹、曲面及装配重建不属于此入口的验收范围。详细来源及范围见
+外形保留精确原生直线/圆弧，锥形孔用旋转切除创建；保存重开后回读圆柱段、锥面角度与端点、特征定义和精确体积。曲线投影核验使用0.002毫米弦差目标及0.025毫米投影容差，这些采样不用于创建CAD。孔必须从约定视图的完整坐标轴法向平面进入。反向/斜向孔、相交孔包络、未解释的隐藏结构、任意自由曲面、螺纹及装配重建不属于此入口范围。详细来源及范围见
 [`drawing2cad/REFERENCES.md`](drawing2cad/REFERENCES.md)。
 
 PDF支持1至4页，在本机转成参考图片，仍需支持图片的模型和关键尺寸确认。

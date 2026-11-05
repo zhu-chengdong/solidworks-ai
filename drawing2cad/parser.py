@@ -109,7 +109,7 @@ def inspect_dxf(path,unit_override=None,advanced=False):
         text=e.plain_text() if e.dxftype()=='MTEXT' else str(e.dxf.text)
         annotations.append({'text':text,'point_mm':_point(e.dxf.insert,scale),'handle':e.dxf.handle})
     full_text=' '.join(a['text'] for a in annotations)
-    advanced=bool(advanced or re.search(r'盲孔|沉孔|BLIND|CBORE|COUNTERBORE|⌴|↧|非通孔|非贯穿|不(?:是)?通孔|NOT\s+THR(?:OUGH|U)|(?:DIA|[Ø⌀Φφ]|直径).{0,30}(?:DEPTH|深)',full_text,re.I)
+    advanced=bool(advanced or re.search(r'盲孔|沉孔|沉头|钻尖|BLIND|CBORE|COUNTERBORE|CSK|COUNTERSINK|⌴|↧|非通孔|非贯穿|不(?:是)?通孔|NOT\s+THR(?:OUGH|U)|(?:DIA|[Ø⌀Φφ]|直径).{0,30}(?:DEPTH|深)',full_text,re.I)
         or all(re.search(p,full_text,re.I) for p in [r'主视|\bFRONT\b',r'俯视|\bTOP\b',r'右视|\bRIGHT\b']))
     # Text/DIMENSION blocks are never decomposed into phantom part outlines.
     def entities(items,inherited=None,depth=0):
@@ -215,6 +215,23 @@ def inspect_dxf(path,unit_override=None,advanced=False):
             loops.append([{'kind':'line','start':list(a),'end':list(b)} for a,b in zip(vertices,vertices[1:])])
         loops += [[s] for s in segments if s['kind']=='circle']
         details=noncircles;duplicates=len(noncircles)-len({repr(s) for s in noncircles})
+    elif advanced and noncircles:
+        # Flatten only to identify topology; retain the complete original arcs
+        # for native sketches. No sampled polygon is ever sent to SolidWorks.
+        from shapely.geometry import LineString
+        from shapely.ops import polygonize,unary_union
+        paths=[LineString([[round(x,8),round(y,8)] for x,y in samples(s)]) for s in noncircles]
+        solid=unary_union(list(polygonize(unary_union(paths))))
+        if solid.is_empty:raise DrawingError('曲线视图轮廓未闭合。')
+        exterior=[]
+        for s,geometry_path in zip(noncircles,paths):
+            if not solid.buffer(TOL).covers(geometry_path):raise DrawingError('曲线视图外存在开放辅助线。')
+            missing=geometry_path.difference(solid.boundary.buffer(TOL)).length
+            if missing<1e-4:exterior.append(s)
+            elif geometry_path.intersection(solid.boundary.buffer(TOL)).length>1e-3:
+                raise DrawingError('曲线与外轮廓部分重合，请在交点处分割原始曲线。')
+        loops,duplicates=_loops(exterior+[s for s in segments if s['kind']=='circle'])
+        details=noncircles
     else:loops,duplicates=_loops(segments)
     records=[]
     for loop in loops:
@@ -239,8 +256,8 @@ def inspect_dxf(path,unit_override=None,advanced=False):
 
 def options(text):
     text=' '.join(text) if isinstance(text,list) else str(text)
-    if re.search(r'沉头|螺纹|抽壳|放样|装配|拔模|旋转体|曲面|countersink|thread|loft|assembly',text,re.I):
-        raise DrawingError('这个精确图纸入口只支持等厚拉伸与贯穿内轮廓。检测到盲孔、沉孔、装配等其他特征要求，请另建工程任务明确尺寸；本次不会省略这些特征后继续建模。')
+    if re.search(r'螺纹|抽壳|放样|装配|拔模|旋转体|曲面|thread|loft|assembly',text,re.I):
+        raise DrawingError('这个精确图纸入口不支持螺纹、抽壳、放样、装配或自由曲面；请另建工程任务明确这些特征。')
     thicknesses=re.findall(r'(?:厚度|板厚|厚|thickness\s*[=:]?)\s*([0-9]+(?:\.[0-9]+)?)\s*(毫米|mm|厘米|cm|英寸|inch|米|m)?',text,re.I)
     thickness=None
     if thicknesses:
@@ -250,7 +267,7 @@ def options(text):
     m=re.search(r'(?:图纸单位|drawing units?)\s*(?:为|是|[:=])?\s*(毫米|mm|厘米|cm|英寸|inch|米|m)',text,re.I)
     if m:unit={'毫米':'mm','厘米':'cm','英寸':'inch','米':'m'}.get(m[1].lower(),m[1].lower())
     selected=re.findall(r'(?:视图|view)\s*([1-9][0-9]?)',text,re.I)
-    return {'advanced':bool(re.search(r'三视图|盲孔|沉孔|不(?:是|做|要)?通孔|不贯穿|blind|counterbore',text,re.I)),'request_text':text,'thickness_mm':thickness,'thickness_unit_explicit':bool(thicknesses and thicknesses[-1][1]),'unit_override':unit,'view_id':int(selected[-1]) if selected else None,
+    return {'advanced':bool(re.search(r'三视图|盲孔|沉孔|沉头|钻尖|侧向孔|不(?:是|做|要)?通孔|不贯穿|blind|counterbore|countersink|\bCSK\b',text,re.I)),'request_text':text,'thickness_mm':thickness,'thickness_unit_explicit':bool(thicknesses and thicknesses[-1][1]),'unit_override':unit,'view_id':int(selected[-1]) if selected else None,
             'through':bool(re.search(r'通孔|贯穿|through',text,re.I)),
             'ignore_dimensions':bool(re.search(r'忽略标注|ignore dimensions',text,re.I))}
 

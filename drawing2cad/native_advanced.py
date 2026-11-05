@@ -25,11 +25,12 @@ def _segments(points):
     return [{'kind':'line','start':p,'end':q} for p,q in zip(points,points[1:]+points[:1])]
 
 
-def _sketch(doc,loops,automation,plane):
+def _sketch(doc,loops,automation,plane,coordinate_map=None):
     from scripts.sw_connect import create_empty_dispatch_variant
     from scripts.sw_part import sketch,sketch_line,sketch_circle
     from scripts.sw_sketch_quality import fully_define_sketch
     with sketch(doc,plane) as ref:
+        if coordinate_map is not None:loops=coordinate_map(loops)
         manager=doc.SketchManager;old=_get(manager,'AddToDB');made=[]
         try:
             manager.AddToDB=True
@@ -68,6 +69,9 @@ def _depth(feature,expected,through):
 
 
 def create_part(app,automation,spec):
+    if spec['kind']=='orthographic_analytic':
+        from .native_analytic import create_part as create
+        return create(app,automation,spec)
     from scripts.sw_part import extrude_boss,extrude_cut
     from .native import _shift
     made=automation.create_new_part()
@@ -128,6 +132,9 @@ def native_projections(planar_faces,spec):
 
 
 def measure(automation,doc,spec):
+    if spec['kind']=='orthographic_analytic':
+        from .native_analytic import measure as read
+        return read(automation,doc,spec)
     from engineering.native import _exact_bounds
     bodies=automation._get_solid_bodies(doc);volume=sum(automation._body_mass_props(b,'mm')['volume_exact'] for b in bodies);bounds=_exact_bounds(bodies)
     size=all(abs(a-b)<1e-4 for a,b in zip(bounds['size_mm'],spec['size_mm']))
@@ -188,7 +195,10 @@ def build(app,automation,spec,task,source,sha256):
     feature=_get(doc,'FirstFeature')
     while feature is not None:actual[str(_get(feature,'Name'))]=feature;feature=_get(feature,'GetNextFeature')
     for hole in spec['holes']:
-        hole['native_features']=[_depth(actual[r['feature']],r['depth_mm'] or 0,r['through_all']) for r in hole['native_features']]
+        if spec['kind']=='orthographic_analytic':
+            from .native_analytic import read_feature
+            hole['native_features']=[read_feature(actual[r['feature']],r) for r in hole['native_features']]
+        else:hole['native_features']=[_depth(actual[r['feature']],r['depth_mm'] or 0,r['through_all']) for r in hole['native_features']]
     print('Native reopened geometry/depth readback',flush=True,file=sys.stderr)
     reopened=measure(automation,doc,spec);quality=inspect_model_sketches(doc)
     if not reopened['passed'] or quality['status']!='pass':raise RuntimeError('Saved/reopened advanced drawing model failed geometry/depth/constraint checks')

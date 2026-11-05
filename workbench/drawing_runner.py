@@ -34,7 +34,7 @@ async def run_drawing(engine,job):
         if question:
             job.collect_artifacts();job.finish('clarify',question);return
         if spec.get('kind'):
-            summary=('按三视图重建阶梯实体' if spec['kind']=='orthographic' else '按图纸外轮廓建模')+f"，尺寸{'×'.join(f'{v:g}' for v in spec['size_mm'])}毫米，读取{len(spec['holes'])}个孔标注并按各自深度建孔。"
+            summary=('按三个正交轮廓重建原生实体' if spec['kind'] in {'orthographic','orthographic_analytic'} else '按图纸外轮廓建模')+f"，尺寸{'×'.join(f'{v:g}' for v in spec['size_mm'])}毫米，读取{len(spec['holes'])}个孔标注并按各自方向与深度建孔。"
             geometry={'size_mm':spec['size_mm'],'holes':spec['holes'],'views':spec['views'],'assumptions':spec['assumptions']}
         else:
             summary=f"使用视图{spec['id']}，沿原图XY轮廓拉伸{spec['thickness_mm']:g}毫米，内轮廓全部贯穿。"

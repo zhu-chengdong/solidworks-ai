@@ -45,3 +45,45 @@ def blind_plate(path):
         m.add_leader([center,tail]);m.add_text(text,dxfattribs={'height':3,'insert':tail})
     if path is not None:doc.saveas(path)
     return doc
+
+
+def analytic_housing(path,curved=False,missing_angle=False,total_depth=False):
+    """Dimensioned, ordinary three-view DXF with axis and bottom conventions."""
+    import math
+    doc=ezdxf.new('R2013',setup=['linetypes']);doc.units=4;m=doc.modelspace()
+    for name in ('OUTLINE','DETAIL','NOTES','LEADERS','DIM'):doc.layers.new(name)
+    doc.layers.new('HIDDEN',dxfattribs={'linetype':'DASHED'})
+    L,W,H=(100,60,60) if curved else (120,80,50);top=(0,130);right=(L+60,0)
+    def poly(points,offset=(0,0)):
+        m.add_lwpolyline([(x+offset[0],y+offset[1]) for x,y in points],close=True,dxfattribs={'layer':'OUTLINE'})
+    poly([(0,0),(L,0),(L,W),(0,W)],top);poly([(0,0),(W,0),(W,H),(0,H)],right)
+    if curved:
+        m.add_lwpolyline([(0,0,0),(100,0,0),(100,10,1),(0,10,0)],format='xyb',close=True,dxfattribs={'layer':'OUTLINE'})
+    else:poly([(0,0),(120,0),(120,50),(60,50),(0,30)])
+    for role,position in [('TOP',(L/2,118)),('FRONT',(L/2,-12)),('RIGHT',(right[0]+W/2,-12))]:m.add_text(role,dxfattribs={'height':4,'insert':position,'layer':'NOTES'})
+    m.add_text('THIRD ANGLE; SOLID UNLESS SHOWN; mm',dxfattribs={'height':3,'insert':(-120,245),'layer':'NOTES'})
+    if curved:
+        holes=[('front',(25,15),[4],'H1 DIA8 BLIND TOTAL DEPTH20 POINT118',(-130,74)),('front',(75,18),[3.3,6.5],'H2 DIA6.6 THRU CSK DIA13 ANGLE90',(95,92)),('front',(50,38),[3,5],'H3 DIA6 BLIND DEPTH12 FLAT BOTTOM CBORE DIA10 DEPTH4',(20,106))]
+    else:
+        holes=[('front',(22,14),[4],'H1 DIA8 BLIND '+('TOTAL' if total_depth else 'CYL')+' DEPTH18 POINT118',(-135,74)),('top',(90,28),[3.3,6.5],'H2 DIA6.6 THRU CSK DIA13'+('' if missing_angle else ' ANGLE90'),(5,238)),('right',(56,18),[3.3,6.5],'H3 DIA6.6 THRU CSK DIA13 ANGLE82',(185,100)),('top',(90,62),[4],'H4 DIA8 BLIND CYL DEPTH12 POINT118',(80,220))]
+    for role,center,radii,text,tail in holes:
+        offset=top if role=='top' else right if role=='right' else (0,0);p=(center[0]+offset[0],center[1]+offset[1])
+        for r in radii:m.add_circle(p,r,dxfattribs={'layer':'OUTLINE'})
+        m.add_leader([p,tail],dxfattribs={'layer':'LEADERS'});m.add_text(text,dxfattribs={'height':3,'insert':tail,'layer':'NOTES'})
+    # Ordinary hidden-line projections provide an independent check on hole
+    # depth, drill apex and countersink taper; they are not feature metadata.
+    tip=4/math.tan(math.radians(59));cylinder=(20 if curved else 18)-tip if curved or total_depth else 18;cx=25 if curved else 22
+    hidden=[]
+    for sign in (-1,1):
+        hidden.extend([((cx+sign*4,130),(cx+sign*4,130+cylinder)),((cx+sign*4,130+cylinder),(cx,130+cylinder+tip))])
+        if not curved:
+            hidden.extend([((90+sign*4,50),(90+sign*4,38)),((90+sign*4,38),(90,38-tip))])
+            recess=(6.5-3.3)/math.tan(math.radians(41))
+            hidden.extend([((120,130+56+sign*6.5),(120-recess,130+56+sign*3.3)),((120-recess,130+56+sign*3.3),(0,130+56+sign*3.3))])
+    for p,q in hidden:m.add_line(p,q,dxfattribs={'layer':'HIDDEN'})
+    # Real dimensions and hole positions remain visible in a regular CAD viewer.
+    for base,a,b,angle in [((0,-28),(0,0),(L,0),0),((L+20,0),(L,0),(L,H),90),((L+18,130),(L,130),(L,130+W),90)]:m.add_linear_dim(base=base,p1=a,p2=b,angle=angle,dxfattribs={'layer':'DIM'}).render()
+    if curved:m.add_radius_dim(center=(50,10),radius=50,angle=55,dxfattribs={'layer':'DIM'}).render()
+    else:m.add_text('SLOPE: (0,30) TO (60,50); FLAT ROOF X60..120',dxfattribs={'height':3,'insert':(-120,256),'layer':'NOTES'})
+    if path is not None:doc.saveas(path)
+    return doc

@@ -88,6 +88,14 @@ class WebTests(unittest.TestCase):
         self.assertEqual(drawing.units,4);self.assertGreaterEqual(len(drawing.modelspace().query('DIMENSION')),6)
         self.assertEqual(len(drawing.modelspace().query('LEADER')),5)
         self.assertIn(b'FLAT BOTTOM',body)
+        from drawing2cad.parser import inspect_dxf,select_spec,options
+        for kind,count in [('sloped',4),('curved',3)]:
+            status,body,headers=self.request('GET','/api/drawing-example?kind='+kind)
+            self.assertEqual(status,200)
+            path=Path(self.directory.name)/(kind+'.dxf');path.write_bytes(body)
+            spec,question=select_spec(inspect_dxf(path),options('按三视图和孔标注建模'))
+            self.assertIsNone(question,question);self.assertEqual(len(spec['holes']),count)
+        self.assertEqual(self.request('GET','/api/drawing-example?kind=invalid')[0],400)
 
     def test_another_instance_cannot_share_our_listening_port(self):
         with self.assertRaises(OSError):
