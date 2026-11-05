@@ -2,14 +2,14 @@
 
 ## 下载与开始使用
 
-**[点击下载 Windows 版（内含 EXE，约 173 MB）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.4.0-rc13/SolidWorksAI-0.4.0-rc13-windows-x64.zip)**
+**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.6.0-rc1/SolidWorksAI-0.6.0-rc1-windows-x64.zip)**
 
-当前版本为 **0.4.0-rc13 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.4.0-rc13)。
+当前版本为 **0.6.0-rc1 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.6.0-rc1)。
 
 1. 准备 Windows 64 位电脑，并安装、激活 SolidWorks 2024。
 2. 点击上面的下载链接，下载后右键压缩包，选择“全部解压缩”。
 3. 打开解压后的 `SolidWorksAI` 文件夹，双击 `SolidWorksAI.exe`。保留同目录的 `SolidWorksMCP.exe` 和 `_internal` 文件夹。
-4. 在打开的网页中进入“模型与密钥”，填写自己的 API Key，点击“保存并测试”，随后用自然语言输入建模需求。
+4. 精确DXF/DWG拉伸建模可直接上传图纸并输入厚度等要求。其他AI任务在“模型与密钥”中填写自己的API Key，保存后用自然语言输入建模需求。
 
 发布包自带运行环境，无需安装 Python 或输入命令行。每位用户使用自己的 API 账户和额度，密钥保存在本人 Windows 凭据管理器中。
 
@@ -22,6 +22,38 @@ GitHub 的 `Code → Download ZIP` 下载的是开发源码；直接使用程序
 SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年份尚未验收。
 
 ## 普通用户
+
+### 二维图纸生成三维零件
+
+点击“添加二维图纸”，选择DXF、DWG或PDF。DXF/DWG走精确矢量流程，例如输入
+“厚度8毫米，所有内轮廓均为通孔”。多个轮廓时程序先显示编号识别图，再回复
+“使用视图1”即可继续。这个受限流程无需配置API Key，Token消耗为0。
+
+当前支持模型空间的等厚拉伸件、精确直线/圆弧、圆孔和贯穿闭合槽，保留图纸原文件。
+DWG由本机SolidWorks原生转换；只读取Model空间，不混入其他图纸或默认图框。
+程序核对单位及标注与坐标的冲突，不自动补缝或猜厚度。盲孔、沉孔、螺纹、曲面、
+装配及任意多视图重建尚未通过该入口验收。详细参考来源及范围见
+[`drawing2cad/REFERENCES.md`](drawing2cad/REFERENCES.md)。
+
+PDF支持1至4页，在本机转成参考图片，仍需支持图片的模型和关键尺寸确认。
+PDF路径的模型调用按所选供应商计费，不承诺从扫描图恢复精确CAD坐标。
+
+### 可选的免费额度与 Magpie 路由
+
+打开左下角“额度与路由”，在密码框保存自己的魔搭访问令牌，然后刷新余额和模型。
+令牌由 Windows 凭据管理器保管，Magpie 只连接本机桥接接口，不获得真实上游令牌。
+点击“安装或启动 Magpie”从官方 GitHub 下载并校验 Windows 后台程序，首次需要联网。
+本机后台使用3425和3430端口，与已有其他Magpie实例同时使用时会提示端口冲突。
+
+选择基础、常规、复杂三个档的准确模型ID，测试工具调用，再启用免费任务池。
+程序按本地规则判断任务难度，装配体和图片走复杂规划，执行走常规档，关键复核用复杂档。
+模型实际返回、强度和用量会记录；额度不足不会切换到付费API。
+
+魔搭每日赠送额度需本人在官网登录领取；软件不模拟网页登录活动。
+“管理 Magpie 签到账号”可在隔离的Magpie管理页添加支持签到的账号。
+启用每日检查后，在本工作台运行期间每天检查一次；未配置账号、验证码和失败会如实显示。
+这不是Windows关机后仍运行的定时服务。其他Agent的订阅登录自动发现已关闭。
+未知余额显示未核实，不作为零余额或领取成功。免费模型的稳定性需以实际任务验证。
 
 1. 在自己的电脑安装并激活 SolidWorks 2024，先确认能够正常启动、新建零件。
 2. 下载 Windows 发布压缩包并完整解压，双击 `SolidWorksAI.exe`。

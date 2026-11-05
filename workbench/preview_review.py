@@ -63,6 +63,7 @@ async def execute_preview_repair(engine,job,session,profile,issues):
 
 async def review_delivery(engine,job,session,plan,planner,executor,summary):
     from .engine import Review,JobStopped,image_input,inside
+    planner = getattr(job, '_reviewer_profile', planner)
     mode=job.review_status.get('mode');job.review_status={'mode':mode,'state':'reviewing','rounds':0,'repair_count':0}
     previous_review=None
     for index in range(2):

@@ -10,6 +10,7 @@ let sending = false;
 let renderSignature = '';
 let attachments = [];
 let cadAttachments = [];
+let drawingAttachments = [];
 let uploading = false;
 let moduleId = 'solidworks';
 const activePhases = new Set(['queued','planning','executing','checking','stopping']);
@@ -25,8 +26,31 @@ async function api(path, data) {
 function notice(text) { $('notice').textContent=text; $('notice').hidden=!text; }
 function settingsNotice(text) { $('settings-notice').textContent=text; $('settings-notice').hidden=!text; }
 function node(tag, className, text) { const element=document.createElement(tag); if(className) element.className=className; if(text!==undefined) element.textContent=text; return element; }
-function configured() { return state.settings && ['planner','executor'].every(role=>state.settings.providers[state.settings.roles[role].provider].key_present); }
+function configured() { if(state.magpie?.config?.enabled)return state.magpie.key_present&&state.magpie.gateway_ready;return state.settings && ['planner','executor'].every(role=>state.settings.providers[state.settings.roles[role].provider].key_present); }
 function currentJob() { return state.jobs.find(job=>job.id===selected); }
+
+function magpieNotice(text){$('magpie-notice').textContent=text;$('magpie-notice').hidden=!text;}
+function showMagpie(value,fill=false){
+  state.magpie=value;const c=value.config;
+  if(fill){$('magpie-key').value='';$('magpie-enabled').checked=c.enabled;$('magpie-auto').checked=c.auto_checkin;$('magpie-vision').checked=c.vision;['simple','standard','complex'].forEach(t=>$('magpie-'+t).value=c.models[t]);$('magpie-effort').value=c.effort;$('magpie-output').value=c.max_output_tokens;}
+  $('magpie-key-state').textContent=value.key_present?'令牌已安全保存在本机；留空保持。':'尚未保存魔搭令牌。';
+  $('magpie-balance').textContent=value.balance_state==='verified'?'实际可用余额：'+value.balance+' 魔粒（'+value.checked_at+'）':'额度尚未核实：'+(value.balance_message||'保存令牌后点击刷新。');
+  $('magpie-checkin-state').textContent=value.checkin?.message||'尚未配置支持签到的账号。';
+  $('magpie-gateway').textContent=value.gateway_ready?'Magpie 网关已启动，当前任务池只转发到魔搭。':'Magpie 网关尚未启动。';
+  const list=$('magpie-models');list.replaceChildren();(value.models||[]).forEach(id=>{const item=node('option');item.value=id;list.append(item);});
+}
+async function magpieAction(action){
+  const ids=['magpie-save','magpie-start','magpie-refresh','magpie-checkin','magpie-test'];ids.forEach(id=>$(id).disabled=true);magpieNotice('正在处理，请稍候。');
+  try{
+    let data={action};
+    if(action==='save')data={action,key:$('magpie-key').value,config:{enabled:$('magpie-enabled').checked,auto_checkin:$('magpie-auto').checked,free_only:true,vision:$('magpie-vision').checked,models:Object.fromEntries(['simple','standard','complex'].map(t=>[t,$('magpie-'+t).value.trim()])),effort:$('magpie-effort').value,max_output_tokens:Number($('magpie-output').value)}};
+    const value=await api('/api/magpie',data);$('magpie-key').value='';showMagpie(value);magpieNotice(action==='save'?'设置已保存在本机。':action==='test'?(value.model_tests||[]).map(x=>x.model+'：'+(x.tools_verified?'工具调用通过':x.message||'未通过工具调用')).join('；'):'状态已更新。');await refresh();
+  }catch(error){magpieNotice(error.message);}finally{ids.forEach(id=>$(id).disabled=false);}
+}
+$('magpie-open').addEventListener('click',async()=>{try{showMagpie(await api('/api/magpie'),true);magpieNotice('');$('magpie-dialog').showModal();}catch(error){notice(error.message);}});
+$('magpie-close').addEventListener('click',()=>{$('magpie-key').value='';$('magpie-dialog').close();});
+$('magpie-dialog').addEventListener('close',()=>{$('magpie-key').value='';});
+['save','start','refresh','checkin','test','manage'].forEach(action=>$('magpie-'+action).addEventListener('click',()=>magpieAction(action)));
 
 function render() {
   if (!state.settings) return;
@@ -38,8 +62,10 @@ function render() {
   });
   $('upload-button').disabled=uploading||sending||!!state.active_job||attachments.length>=4;
   $('cad-upload-button').disabled=uploading||sending||!!state.active_job||cadAttachments.length>=12;
+  $('drawing-upload-button').disabled=uploading||sending||!!state.active_job||drawingAttachments.length>=1;
   $('reference-mode').disabled=!!state.active_job;
-  ['planner','executor'].forEach(role=>{const p=state.settings.roles[role];$(role+'-badge').textContent=p.model+(p.reasoning_effort?' · '+p.reasoning_effort.toUpperCase():'');});
+  const localVector=currentJob()?.routing?.mode==='local_vector'||drawingAttachments.some(a=>a.kind==='vector');
+  ['planner','executor'].forEach(role=>{const p=state.settings.roles[role];$(role+'-badge').textContent=localVector?(role==='planner'?'精确图纸解析 · 0 Token':'原生API建模 · 0 Token'):state.magpie?.config?.enabled?(currentJob()?.routing?.[role]||'按任务难度分配（免费）'):p.model+(p.reasoning_effort?' · '+p.reasoning_effort.toUpperCase():'');});
   $('setup-notice').hidden=configured();
   $('service-status').textContent=state.active_job ? '本机任务执行中' : state.environment?.solidworks_registered ? '已检测到 SolidWorks 2024' : '请先安装并激活 SolidWorks 2024';
   $('new-task').disabled=!!state.active_job;
@@ -68,6 +94,7 @@ function render() {
   job.requests.forEach(text=>container.append(node('div','user-message',text)));
   if(job.references?.length){const refs=node('div','reference-gallery');job.references.forEach(ref=>{const img=node('img');img.src=ref.url;img.alt=ref.name;refs.append(img);});container.append(refs);}
   if(job.cad_inputs?.length)container.append(node('p','small-note','已提供零件：'+job.cad_inputs.map(file=>file.name).join('、')+'。CAD文件留在本机，模型接收名称与检查结果。'));
+  if(job.drawing_inputs?.length)container.append(node('p','small-note','二维图纸：'+job.drawing_inputs.map(file=>file.name).join('、')+'。DXF/DWG使用本机精确轮廓建模；PDF按参考图片处理。'));
   container.append(node('div','assistant-label','科研自动化'));
   const status=node('div','task-status '+job.phase+(activePhases.has(job.phase)?' active':''));
   status.append(node('span','phase-dot'),node('span','',job.label)); container.append(status);
@@ -81,6 +108,7 @@ function render() {
     if(job.plan.assumptions?.length)card.append(node('p','small-note','估计内容：'+job.plan.assumptions.join('；')));
     container.append(card);
   }
+  if(job.routing?.tier)container.append(node('p','small-note','免费任务池 · '+({simple:'基础',standard:'常规',complex:'复杂'}[job.routing.tier])+'：'+job.routing.reason+' 实际规划 '+job.routing.planner+'；复核 '+job.routing.reviewer));
   if(job.summary) container.append(node('div','task-summary'+((['failed','blocked','clarify'].includes(job.phase)||(job.phase==='review_required'&&job.review_status?.state!=='passed'))?' error':''),job.summary));
   if(job.review_status?.state) {
     const text={reviewing:job.review_status.repair_count?'预览已修正，正在再次复核':'正在复核预览',repairing:'复核发现预览问题，正在自动修正',passed:job.review_status.repair_count?'预览自动修正后再次复核通过':'预览复核通过',unresolved:'自动复核尚未通过，请查看问题记录'}[job.review_status.state];
@@ -184,15 +212,16 @@ $('remove-key').addEventListener('click',async()=>{
   try {const result=await api('/api/keys/remove',{provider:keyProvider});state.settings=result.settings;draft=structuredClone(result.settings);pendingKeys[keyProvider]='';showProvider();render();settingsNotice('本应用保存的该供应商密钥已移除。');}catch(error){settingsNotice(error.message);}
 });
 document.querySelectorAll('[data-example]').forEach(button=>button.addEventListener('click',()=>{$('message').value=button.dataset.example;if(button.dataset.referenceMode)$('reference-mode').value=button.dataset.referenceMode;$('message').focus();}));
-$('new-task').addEventListener('click',()=>{selected=null;attachments=[];cadAttachments=[];renderAttachments();renderSignature='';$('message').value='';notice('');render();$('message').focus();});
+$('new-task').addEventListener('click',()=>{selected=null;attachments=[];cadAttachments=[];drawingAttachments=[];renderAttachments();renderSignature='';$('message').value='';notice('');render();$('message').focus();});
 $('new-task-mobile').addEventListener('click',()=>{$('new-task').click();});
 $('message').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();$('chat-form').requestSubmit();}});
 $('chat-form').addEventListener('submit',async event=>{
   event.preventDefault();if(sending||state.active_job)return;
-  if(!configured()){openSettings();settingsNotice('先保存两个角色所用供应商的密钥，就可以开始执行。');return;}
-  const message=$('message').value.trim()||(attachments.length?'请根据参考图片新建零件。':cadAttachments.length?'请使用选择的零件规划装配，先确认缺少的配合关系。':'');if(!message)return;
+  const vector=drawingAttachments.some(a=>a.kind==='vector')||(!drawingAttachments.length&&state.jobs.find(j=>j.id===selected)?.drawing_inputs?.some(a=>a.kind==='vector'));
+  if(!configured()&&!vector){openSettings();settingsNotice('先保存两个角色所用供应商的密钥，就可以开始执行。');return;}
+  const message=$('message').value.trim()||(drawingAttachments.length?'请根据二维图纸新建零件，先询问缺少的尺寸。':attachments.length?'请根据参考图片新建零件。':cadAttachments.length?'请使用选择的零件规划装配，先确认缺少的配合关系。':'');if(!message)return;
   sending=true;notice('');render();
-  try {const job=await api('/api/jobs',{message,previous_job_id:selected,module_id:moduleId,reference_ids:attachments.map(a=>a.id),cad_ids:cadAttachments.map(a=>a.id),reference_mode:$('reference-mode').value});selected=job.id;attachments=[];cadAttachments=[];renderAttachments();$('message').value='';state.jobs=[job,...state.jobs.filter(item=>item.id!==job.id)];state.active_job=job.id;renderSignature='';render();}
+  try {const job=await api('/api/jobs',{message,previous_job_id:selected,module_id:moduleId,reference_ids:attachments.map(a=>a.id),cad_ids:cadAttachments.map(a=>a.id),drawing_ids:drawingAttachments.map(a=>a.id),reference_mode:$('reference-mode').value});selected=job.id;attachments=[];cadAttachments=[];drawingAttachments=[];renderAttachments();$('message').value='';state.jobs=[job,...state.jobs.filter(item=>item.id!==job.id)];state.active_job=job.id;renderSignature='';render();}
   catch(error){notice(error.message);}finally{sending=false;await refresh();}
 });
 $('stop-task').addEventListener('click',async()=>{if(!state.active_job)return;try{await api('/api/stop',{job_id:state.active_job});await refresh();}catch(error){notice(error.message);}});
@@ -204,7 +233,19 @@ function renderAttachments(){
   const box=$('attachments');box.replaceChildren();
   attachments.forEach(ref=>{const card=node('div','attachment');const img=node('img');img.src=ref.url;img.alt=ref.name;const remove=node('button','','移除');remove.type='button';remove.addEventListener('click',()=>{attachments=attachments.filter(a=>a.id!==ref.id);renderAttachments();render();});card.append(img,node('span','',ref.name),remove);box.append(card);});
   cadAttachments.forEach(ref=>{const card=node('div','attachment');const remove=node('button','','移除');remove.type='button';remove.addEventListener('click',()=>{cadAttachments=cadAttachments.filter(a=>a.id!==ref.id);renderAttachments();render();});card.append(node('span','','零件 · '+ref.name),remove);box.append(card);});
+  drawingAttachments.forEach(ref=>{const card=node('div','attachment');const remove=node('button','','移除');remove.type='button';remove.addEventListener('click',()=>{drawingAttachments=drawingAttachments.filter(a=>a.id!==ref.id);renderAttachments();render();});card.append(node('span','','二维图纸 · '+ref.name),remove);box.append(card);});
 }
+$('drawing-upload-button').addEventListener('click',()=>$('drawing-files').click());
+$('drawing-files').addEventListener('change',async()=>{
+  const files=[...$('drawing-files').files];$('drawing-files').value='';if(!files.length)return;
+  if(files.length!==1||drawingAttachments.length){notice('每个任务请选择一份二维图纸。');return;}
+  uploading=true;render();notice('正在保存本机图纸；DXF/DWG不消耗模型Token，PDF会转换为参考图片。');
+  try{const file=files[0];if(file.size>20*1024*1024)throw new Error('每张图纸最多20MB。');
+    const response=await fetch('/api/drawing-uploads',{method:'POST',headers:{'X-App-Token':token,'Content-Type':'application/octet-stream','X-File-Name':encodeURIComponent(file.name)},body:file});
+    const result=await response.json();if(!response.ok)throw new Error(result.error||'图纸上传失败。');drawingAttachments.push(result);renderAttachments();
+    notice(result.kind==='vector'?'图纸已加入。请输入“厚度8毫米，所有内轮廓均为通孔”等要求；多个视图会先请你选择。':'PDF已转成参考图片；需要支持图片的模型。请补充关键尺寸，扫描图不会被当作精确CAD坐标。');
+  }catch(error){notice(error.message);}finally{uploading=false;render();}
+});
 $('upload-button').addEventListener('click',()=>$('image-files').click());
 $('image-files').addEventListener('change',async()=>{
   const files=[...$('image-files').files];$('image-files').value='';

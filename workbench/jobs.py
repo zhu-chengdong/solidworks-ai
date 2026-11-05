@@ -13,6 +13,7 @@ from .settings import ARTIFACT_ROOT, KEY_PATTERN, UserFacingError, redact
 from .modules import Module, ModuleRegistry
 from .reference_inputs import pin_references
 from .cad_inputs import pin_cad_inputs
+from .drawing_inputs import pin_drawings
 
 ACTIVE = {"planning", "executing", "checking", "stopping", "queued"}
 
@@ -32,6 +33,7 @@ class Job:
         self.reference_mode = reference_mode
         self.references = []
         self.cad_inputs = []
+        self.drawing_inputs = []
         self.previous_context = previous_context or {}
         self.phase = "queued"
         self.label = "等待处理"
@@ -45,6 +47,7 @@ class Job:
         self.owned_title = None
         self.review_reasons = set()
         self.review_status = {}
+        self.routing = {}
         self.cancel = threading.Event()
         self.lock = threading.RLock()
         self.save()
@@ -53,10 +56,10 @@ class Job:
         with self.lock:
             return scrub({"id": self.id, "created": self.created,
                 "requests": list(self.requests), "phase": self.phase, "label": self.label,
-                "module_id": self.module_id, "reference_mode": self.reference_mode, "references": list(self.references), "cad_inputs":list(self.cad_inputs),
+                "module_id": self.module_id, "reference_mode": self.reference_mode, "references": list(self.references), "cad_inputs":list(self.cad_inputs), "drawing_inputs":list(self.drawing_inputs),
                 "summary": self.summary, "plan": self.plan, "events": list(self.events[-160:]),
                 "artifacts": list(self.artifacts), "usage": dict(self.usage),
-                "output_dir": str(self.output_dir), "cancel_requested": self.cancel.is_set(),"review_status":dict(self.review_status)})
+                "output_dir": str(self.output_dir), "cancel_requested": self.cancel.is_set(),"review_status":dict(self.review_status), "routing":dict(self.routing)})
 
     def save(self):
         with self.lock:
@@ -184,10 +187,21 @@ class JobManager:
             return sorted(fresh + [item for item in self.recent if item.get("id") not in ids],
                           key=lambda item: item["created"], reverse=True)[:40]
 
-    def submit(self, message, previous_id=None, module_id="solidworks", references=None, reference_mode="dimensions", cad_inputs=None):
+    def submit(self, message, previous_id=None, module_id="solidworks", references=None, reference_mode="dimensions", cad_inputs=None, drawing_inputs=None):
         module = self.registry.require(module_id)
         references = references or []
         cad_inputs = cad_inputs or []
+        drawing_inputs = drawing_inputs or []
+        previous=self.get(previous_id) if previous_id else None
+        if previous and previous.get('drawing_inputs') and not drawing_inputs:
+            previous_dir=Path(previous['output_dir']).resolve()
+            if not previous_dir.is_relative_to(self.root.resolve()):raise UserFacingError('原任务图纸路径不可用。')
+            for item in previous['drawing_inputs']:
+                source=(previous_dir/item['file']).resolve()
+                if not source.is_relative_to(previous_dir/'inputs'/'drawings'):raise UserFacingError('原任务图纸路径不可用。')
+                drawing_inputs.append((source,item))
+        vector=any(meta.get('kind')=='vector' for _,meta in drawing_inputs)
+        if vector and (references or cad_inputs or module_id!='solidworks'):raise UserFacingError('DXF/DWG精确建模请单独上传一份图纸。')
         if reference_mode not in {"dimensions", "approximate"}:
             raise UserFacingError("请选择按尺寸建模或外观尝试。")
         if references and "image" not in module.inputs:
@@ -199,10 +213,17 @@ class JobManager:
             raise UserFacingError("密钥请填在设置中，自然语言输入区不接收密钥。")
         # Validate only this app's credentials before opening a CAD session.
         settings = module.engine.settings.read()
-        module.engine.settings.role("planner", settings)
-        module.engine.settings.role("executor", settings)
+        from .magpie import read_config, MODELSCOPE
+        routing = read_config(module.engine.settings)
+        if vector:
+            pass # Exact vector route does not resolve providers or credentials.
+        elif routing['enabled']:
+            if not module.engine.settings.vault.has('modelscope', MODELSCOPE): raise UserFacingError('请先在额度与路由中保存魔搭令牌。')
+        else:
+            module.engine.settings.role("planner", settings)
+            module.engine.settings.role("executor", settings)
         vision = settings["roles"]["planner"].get("vision", settings["roles"]["planner"]["provider"] == "openai")
-        if references and not vision:
+        if references and not vision and not routing['enabled']:
             raise UserFacingError("请在模型设置中选择支持图片的理解模型，并启用图片输入。")
         with self.lock:
             if self.active:
@@ -214,6 +235,7 @@ class JobManager:
                 job = self.jobs[previous_id]
                 pin_references(job, references)
                 pin_cad_inputs(job,cad_inputs)
+                pin_drawings(job,drawing_inputs)
                 job.requests.append(message)
                 job.cancel.clear()
                 job.set_phase("queued", "继续理解补充信息")
@@ -233,6 +255,7 @@ class JobManager:
                         if item['id'] not in existing_ids:inherited.append((source,item))
                     cad_inputs=inherited+cad_inputs
                 pin_cad_inputs(job,cad_inputs)
+                pin_drawings(job,drawing_inputs)
                 self.jobs[job.id] = job
             self.active = job.id
             self.pool.submit(self._run, job)
@@ -244,7 +267,11 @@ class JobManager:
             if self.active:raise UserFacingError('当前任务尚未结束，请稍后重新复核。')
             source=self.get(job_id)
             settings=self.engine.settings.read()
-            for role in ('planner','executor'):self.engine.settings.role(role,settings)
+            from .magpie import read_config, MODELSCOPE
+            if read_config(self.engine.settings)['enabled']:
+                if not self.engine.settings.vault.has('modelscope', MODELSCOPE): raise UserFacingError('请先保存魔搭令牌。')
+            else:
+                for role in ('planner','executor'):self.engine.settings.role(role,settings)
             job=clone_for_preview_review(source,self.root)
             self.jobs[job.id]=job;self.active=job.id
             self.pool.submit(self._run,job,True)

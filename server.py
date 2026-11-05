@@ -171,6 +171,36 @@ def load_server():
             return build_reference(app, params.spec_path, params.output_path, os.environ["SW_MCP_OUTPUT_ROOT"], params.component_start)
         return run_locked(operation, engine.ResponseFormat.JSON)
 
+    class DrawingConvertInput(BaseModel):
+        model_config=ConfigDict(extra='forbid')
+        input_path:str
+        sha256:str
+        output_path:str
+    globals()['DrawingConvertInput']=DrawingConvertInput
+
+    @engine.mcp.tool(name='solidworks_convert_drawing')
+    def convert_drawing(params:DrawingConvertInput)->str:
+        """Convert one immutable task-pinned DWG to a new DXF through native SolidWorks APIs. No UI automation."""
+        def operation():
+            from drawing2cad.native import convert_dwg
+            app,_=connection.connect_solidworks()
+            return convert_dwg(app,params.input_path,params.sha256,params.output_path,os.environ['SW_MCP_OUTPUT_ROOT'])
+        return run_locked(operation,engine.ResponseFormat.JSON)
+
+    class DrawingBuildInput(BaseModel):
+        model_config=ConfigDict(extra='forbid')
+        spec_path:str
+    globals()['DrawingBuildInput']=DrawingBuildInput
+
+    @engine.mcp.tool(name='solidworks_build_drawing')
+    def build_drawing(params:DrawingBuildInput)->str:
+        """Reparse a task-pinned drawing, build a fully dimensioned native extrusion, reopen and verify geometry/STEP/previews. No model tokens."""
+        def operation():
+            from drawing2cad.native import build_drawing
+            app,_=connection.connect_solidworks()
+            return build_drawing(app,params.spec_path,os.environ['SW_MCP_OUTPUT_ROOT'])
+        return run_locked(operation,engine.ResponseFormat.JSON)
+
     class EngineeringInput(BaseModel):
         model_config=ConfigDict(extra='forbid')
         spec_path:str

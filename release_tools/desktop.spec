@@ -21,7 +21,7 @@ datas += [(str(file), str(Path('vendor/solidworks-automation') / file.relative_t
           for file in vendor.rglob('*') if file.is_file() and '__pycache__' not in file.parts
           and file.suffix not in {'.pyc', '.pyo'}]
 for distribution in ('openai-agents', 'openai', 'mcp', 'httpx2', 'jsonschema', 'comtypes', 'pillow', 'pyyaml',
-                     'numpy', 'scipy', 'opencv-python-headless', 'scikit-image', 'shapely', 'sympy'):
+                     'numpy', 'scipy', 'opencv-python-headless', 'scikit-image', 'shapely', 'sympy','ezdxf','pypdfium2'):
     datas += copy_metadata(distribution, recursive=True)
 hidden = collect_submodules('scripts') + collect_submodules('comtypes')
 hidden += collect_submodules('solidworks_mcp.automation')

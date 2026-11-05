@@ -25,9 +25,9 @@ FILES = ['app_runtime.py', 'desktop_main.py', 'server.py', 'agent.py',
          'integrations/czuryk/LOFT_REFERENCES.md',
          'integrations/czuryk/provenance.json', 'integrations/czuryk/source/LICENSE',
          'LICENSE', 'PATCHES.md', '.gitignore']
-TREES = ['workbench', 'engineering','tests', 'vendor/solidworks-automation', 'release_tools', 'patches', '.github',
+TREES = ['drawing2cad','workbench', 'engineering','tests', 'vendor/solidworks-automation', 'release_tools', 'patches', '.github',
          'integrations/czuryk/source/solidworks_mcp']
-SENSITIVE = re.compile(r'\b(?:sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{32,}|org-[A-Za-z0-9]{16,}|proj_[A-Za-z0-9]{16,})\b')
+SENSITIVE = re.compile(r'\b(?:sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{32,}|ms-[A-Za-z0-9_-]{24,}|org-[A-Za-z0-9]{16,}|proj_[A-Za-z0-9]{16,})\b')
 
 
 def copy_public(destination):

@@ -96,6 +96,17 @@ class WebTests(unittest.TestCase):
         self.assertNotIn(secret.encode(), body)
         self.assertNotIn(secret.encode(), self.request("GET", "/api/state")[1])
 
+    def test_magpie_key_entry_is_authenticated_and_key_never_returns(self):
+        from workbench.magpie import DEFAULT
+        secret='test-private-modelscope-input'
+        payload={'action':'save','config':DEFAULT,'key':secret}
+        self.assertEqual(self.request('POST','/api/magpie',payload)[0],403)
+        status,body,_=self.request('POST','/api/magpie',payload,self.server.token)
+        self.assertEqual(status,200);self.assertNotIn(secret.encode(),body)
+        self.assertNotIn(secret.encode(),self.request('GET','/api/state')[1])
+        self.assertNotIn(secret,(self.server.magpie.home/'integration.json').read_text())
+        self.assertEqual(self.request('POST','/api/magpie',{'action':'unknown'},self.server.token)[0],400)
+
     def test_task_without_keys_is_rejected_before_mcp(self):
         status, body, _ = self.request("POST", "/api/jobs", {"message": "建10毫米立方体"}, self.server.token)
         self.assertEqual(status, 400)

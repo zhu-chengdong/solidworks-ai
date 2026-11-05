@@ -21,7 +21,7 @@ DEFAULTS = {
     },
     "max_turns": 14,
 }
-KEY_PATTERN = re.compile(r"\bsk-[A-Za-z0-9_-]{8,}\b")
+KEY_PATTERN = re.compile(r"\b(?:sk-[A-Za-z0-9_-]{8,}|ms-[A-Za-z0-9_-]{16,})\b")
 
 
 class UserFacingError(RuntimeError):

@@ -17,6 +17,7 @@
     <div class="history-label">最近任务</div>
     <nav id="history" aria-label="最近任务"></nav>
     <div class="sidebar-bottom">
+      <button class="settings-link" id="magpie-open">额度与路由</button>
       <button class="settings-link" id="settings-open">模型与密钥</button>
       <div class="local-note"><span class="status-dot"></span>服务仅在本机运行</div>
     </div>
@@ -46,6 +47,7 @@
       <form id="chat-form" class="composer">
         <div id="attachments" class="attachments" aria-live="polite"></div>
         <div class="reference-controls"><button type="button" id="upload-button">添加参考图片</button><input id="image-files" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden><button type="button" id="cad-upload-button">添加零件文件</button><input id="cad-files" type="file" accept=".sldprt" multiple hidden><label for="reference-mode">建模方式</label><select id="reference-mode"><option value="dimensions">按尺寸建模</option><option value="approximate">外观尝试，允许估计比例</option></select></div>
+        <div class="reference-controls"><button type="button" id="drawing-upload-button">添加二维图纸</button><input id="drawing-files" type="file" accept=".dxf,.dwg,.pdf" hidden><span class="small-note">DXF/DWG精确拉伸，不消耗模型Token；PDF按图片识别</span></div>
         <label class="sr-only" for="message">输入设计需求</label>
         <textarea id="message" rows="2" placeholder="描述设计需求，或上传图片并补充尺寸。"></textarea>
         <div class="composer-actions"><span id="composer-hint">Enter 发送，Shift + Enter 换行</span><button type="button" id="stop-task" class="stop" hidden>停止任务</button><button type="submit" id="send-task" class="primary">发送需求</button></div>
@@ -76,6 +78,33 @@
       <div id="connection-results"></div>
     </div>
     <div class="dialog-foot"><button id="settings-save" type="button">仅保存设置</button><button id="test-models" type="button" class="primary">保存并测试</button></div>
+  </dialog>
+  <dialog id="magpie-dialog">
+    <div class="dialog-head"><div><h2>免费额度与任务路由</h2><p>本机 Magpie 网关 · 密钥保存在 Windows 凭据管理器。</p></div><button id="magpie-close" type="button">关闭</button></div>
+    <div class="settings-body">
+      <section class="settings-section"><div class="section-number">01</div><div class="section-content"><h3>魔搭免费渠道</h3>
+        <p>每日额度请在魔搭官网登录领取。软件读取实际余额；自动签到用于 Magpie 中支持签到的账号。</p>
+        <p><a href="https://modelscope.cn/my/myaccesstoken" target="_blank" rel="noopener noreferrer">获取魔搭访问令牌</a> · <a href="https://www.modelscope.cn/magicube/usage" target="_blank" rel="noopener noreferrer">官网领取与余额</a></p>
+        <label for="magpie-key">魔搭访问令牌</label><input id="magpie-key" type="password" autocomplete="off" spellcheck="false" placeholder="仅在此处粘贴；已保存时可留空">
+        <p id="magpie-key-state" class="small-note"></p><p id="magpie-balance"></p><p id="magpie-checkin-state" class="small-note"></p>
+        <div class="dialog-foot"><button id="magpie-refresh" type="button">刷新额度和模型</button><button id="magpie-checkin" type="button">检查并签到</button><button id="magpie-manage" type="button">管理 Magpie 签到账号</button></div>
+      </div></section>
+      <section class="settings-section"><div class="section-number">02</div><div class="section-content"><h3>按任务难度选模型</h3>
+        <label class="vision-option"><input id="magpie-enabled" type="checkbox">启用免费任务池，额度不足时停止</label>
+        <label for="magpie-simple">基础任务模型</label><input id="magpie-simple" list="magpie-models" spellcheck="false" placeholder="从渠道实际模型列表选择">
+        <label for="magpie-standard">常规零件模型</label><input id="magpie-standard" list="magpie-models" spellcheck="false">
+        <label for="magpie-complex">装配、图片和复杂规划模型</label><input id="magpie-complex" list="magpie-models" spellcheck="false">
+        <datalist id="magpie-models"></datalist>
+        <p class="small-note">本地规则判断难度，不额外调用分类模型。装配体、图片及已有零件走复杂档；执行记录保留选择依据，模型实际返回和用量。三个档可以先用同一个通过测试的模型。</p>
+        <label for="magpie-effort">任务池思考强度</label><select id="magpie-effort"><option value="auto">模型默认</option><option value="none">关闭</option><option value="low">Low</option><option value="high">High</option><option value="max">MAX</option></select>
+        <label for="magpie-output">单次最大输出 Token</label><input id="magpie-output" type="number" min="4096" max="131072" step="1024">
+        <label class="vision-option"><input id="magpie-vision" type="checkbox">复杂档模型支持图片输入（确认模型能力后启用）</label>
+        <label class="vision-option"><input id="magpie-auto" type="checkbox">应用运行期间每天检查一次已配置账号的签到</label>
+        <p id="magpie-gateway" class="small-note"></p>
+      </div></section>
+      <div id="magpie-notice" class="settings-notice" role="status" hidden></div>
+    </div>
+    <div class="dialog-foot"><button id="magpie-save" type="button">保存到本机</button><button id="magpie-test" type="button">测试免费模型工具调用</button><button id="magpie-start" type="button" class="primary">安装或启动 Magpie</button></div>
   </dialog>
 </body>
 </html>

@@ -21,8 +21,9 @@ from .settings import ROOT, STATE_ROOT, SettingsStore, UserFacingError
 from app_runtime import INSTANCE_MUTEX, installation_status
 from .reference_inputs import ReferenceStore, MAX_IMAGE_BYTES
 from .cad_inputs import CadStore,MAX_CAD_BYTES
+from .drawing_inputs import DrawingStore,MAX_DRAWING_BYTES
 
-VERSION = "0.4.0-rc13"
+VERSION = "0.6.0-rc1"
 WEB_ROOT = Path(__file__).resolve().parent / "web"
 APP_ID = "local-solidworks-research-workbench"
 
@@ -44,9 +45,16 @@ class WorkbenchServer(ThreadingHTTPServer):
         self.manager = manager or JobManager(self.engine)
         self.references = ReferenceStore(self.settings.root / "uploads")
         self.cad_store = CadStore(self.settings.root / "cad_uploads")
+        self.drawing_store = DrawingStore(self.settings.root / 'drawing_uploads',self.references)
         self.token = secrets.token_urlsafe(32)
         super().__init__(address, Handler)
         self.origin = f"http://127.0.0.1:{self.server_port}"
+        from .magpie import MagpieService
+        self.magpie = MagpieService(self.settings, self.origin)
+
+    def server_close(self):
+        if hasattr(self, 'magpie'): self.magpie.close()
+        super().server_close()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -99,7 +107,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"version": VERSION, "settings": self.server.settings.public(),
                     "jobs": self.server.manager.list(), "active_job": self.server.manager.active,
                     "modules": self.server.manager.registry.public(),
-                    "environment": installation_status()})
+                    "environment": installation_status(), "magpie": self.server.magpie.public()})
+            elif path == '/api/magpie':
+                self.send_json(self.server.magpie.public())
             elif path.startswith("/api/uploads/"):
                 file, _ = self.server.references.get(path.removeprefix("/api/uploads/"))
                 self.send_bytes(file.read_bytes(), "image/png")
@@ -132,6 +142,14 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"error": safe_error(exc)}, 500)
 
     def do_POST(self):
+        if self.host_ok() and urlsplit(self.path).path == '/magpie-bridge/v1/chat/completions':
+            try:
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size <= 50_000_000: raise UserFacingError('渠道请求长度无效。')
+                self.send_json(self.server.magpie.forward(self.rfile.read(size), self.headers.get('Authorization')))
+            except Exception as exc:
+                self.send_json({'error': {'message': safe_error(exc), 'type': 'local_channel_error'}}, 400)
+            return
         if not self.host_ok() or not secrets.compare_digest(self.headers.get("X-App-Token", ""), self.server.token):
             self.reject_mutation("请从本机应用页面执行此操作。")
             return
@@ -141,6 +159,14 @@ class Handler(BaseHTTPRequestHandler):
         try:
             size = int(self.headers.get("Content-Length", "0"))
             path = urlsplit(self.path).path
+            if path == '/api/drawing-uploads':
+                if not 0<size<=MAX_DRAWING_BYTES:
+                    self.close_connection=True
+                    raise UserFacingError('每张图纸最多20MB。')
+                raw=self.rfile.read(size)
+                if len(raw)!=size:raise UserFacingError('图纸上传不完整。')
+                self.send_json(self.server.drawing_store.add(raw,unquote(self.headers.get('X-File-Name','drawing.dxf'))),201)
+                return
             if path == '/api/cad-uploads':
                 if not 0<size<=MAX_CAD_BYTES:
                     self.close_connection=True
@@ -164,6 +190,21 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(data, dict):
                 raise UserFacingError("请求格式无效。")
             path = urlsplit(self.path).path
+            if path == '/api/magpie':
+                action = data.get('action')
+                if action in {'save', 'start', 'test'} and self.server.manager.active:
+                    raise UserFacingError('请等待当前 CAD 任务结束后更改渠道。')
+                if action == 'save': result = self.server.magpie.save(data)
+                elif action == 'start': result = self.server.magpie.start()
+                elif action == 'refresh': result = self.server.magpie.refresh()
+                elif action == 'checkin': result = self.server.magpie.checkin()
+                elif action == 'test': result = self.server.magpie.test_models()
+                elif action == 'manage': result = self.server.magpie.open_management()
+                elif action == 'open_claim':
+                    webbrowser.open('https://www.modelscope.cn/magicube/usage'); result = self.server.magpie.public()
+                else: raise UserFacingError('不支持的渠道操作。')
+                self.send_json(result)
+                return
             if path == '/api/review-previews':
                 self.send_json(self.server.manager.submit_preview_review(str(data.get('job_id',''))),201)
                 return
@@ -181,8 +222,12 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/jobs":
                 references = self.server.references.resolve(data.get("reference_ids", []))
                 cad_inputs = self.server.cad_store.resolve(data.get('cad_ids',[]))
+                drawings = self.server.drawing_store.resolve(data.get('drawing_ids',[]))
+                for _,metadata in drawings:
+                    for ref in metadata.get('references',[]):
+                        if not any(r['id']==ref['id'] for _,r in references):references.append(self.server.references.get(ref['id']))
                 self.send_json(self.server.manager.submit(data.get("message", ""), data.get("previous_job_id"),
-                    data.get("module_id", "solidworks"), references, data.get("reference_mode", "dimensions"),cad_inputs), 202)
+                    data.get("module_id", "solidworks"), references, data.get("reference_mode", "dimensions"),cad_inputs,drawings), 202)
             elif path == "/api/stop":
                 self.send_json(self.server.manager.stop(data.get("job_id")))
             elif path == "/api/open-folder":

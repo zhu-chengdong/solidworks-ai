@@ -11,6 +11,12 @@ Their distribution metadata and available license files are copied into licenses
 DEPENDENCIES.json records the installed versions and license expressions.
 These notices do not replace third-party license terms.
 
+The local drawing2cad module uses ezdxf (MIT, Copyright (c) 2020 Manfred Moitzi)
+for exact vector geometry, and pypdfium2/PDFium for local PDF-page rendering.
+Their included distribution metadata and license files are retained in licenses/.
+Drawing2CAD is a design reference only; its model, code and weights are not
+bundled. CAD2Program website content is not included. See drawing2cad/REFERENCES.md.
+
 The selected reference geometry compiler originates from
 https://github.com/czuryk/SolidworksMCP at the pinned commit in
 integrations/czuryk/provenance.json. Copyright (c) 2026 Samsaam Ali Baig.

@@ -277,6 +277,10 @@ def model_settings(profile, role, output_budget=None):
     if (profile['provider']=='openai' and requested=='max'
             and profile['model'] in {'gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra'}):budget=128000
     settings = ModelSettings(max_tokens=budget)
+    if profile.get('transport') == 'magpie':
+        budget = int(profile['output_limit'])
+        settings.max_tokens = budget
+        settings.parallel_tool_calls = False
     if profile["provider"] == "openai":
         settings.store = False
         settings.parallel_tool_calls = False
@@ -352,6 +356,10 @@ class WorkbenchEngine:
             raise error from None
 
     async def test_connections(self):
+        from .magpie import read_config
+        if read_config(self.settings)['enabled']:
+            return {'ok': False, 'results': [{'role': 'magpie', 'title': '免费任务池', 'ok': False,
+                'message': '免费任务池已启用，请到“额度与路由”测试免费模型；本次未调用原付费模型。'}]}
         settings = self.settings.read()
         results = []
         for role in ("planner", "executor"):
@@ -371,9 +379,13 @@ class WorkbenchEngine:
 
     async def run(self, job):
         job.check_stop()
+        if any(d.get('kind')=='vector' for d in getattr(job,'drawing_inputs',[])):
+            from .drawing_runner import run_drawing
+            return await run_drawing(self,job)
         settings = self.settings.read()
-        planner_profile = self.settings.role("planner", settings)
-        executor_profile = self.settings.role("executor", settings)
+        from .magpie import route_profiles
+        selected_profiles = route_profiles(self.settings, job)
+        planner_profile, executor_profile = selected_profiles or (self.settings.role("planner", settings), self.settings.role("executor", settings))
         if job.references and not planner_profile.get("vision", planner_profile["provider"] == "openai"):
             raise UserFacingError("当前理解模型未启用图片输入，请在模型设置中更改。")
         job.set_phase("planning", "正在理解你的要求")
@@ -668,7 +680,8 @@ class WorkbenchEngine:
 
     async def recheck_previews(self,job):
         job.check_stop();settings=self.settings.read()
-        planner=self.settings.role('planner',settings);executor=self.settings.role('executor',settings)
+        from .magpie import route_profiles
+        planner, executor = route_profiles(self.settings, job) or (self.settings.role('planner',settings), self.settings.role('executor',settings))
         plan=EngineeringPlan.model_validate(job.plan)
         job.set_phase('checking','正在重新复核模型与预览')
         async with self.session_factory() as session:
