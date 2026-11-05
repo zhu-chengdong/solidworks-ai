@@ -47,7 +47,8 @@
       <form id="chat-form" class="composer">
         <div id="attachments" class="attachments" aria-live="polite"></div>
         <div class="reference-controls"><button type="button" id="upload-button">添加参考图片</button><input id="image-files" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden><button type="button" id="cad-upload-button">添加零件文件</button><input id="cad-files" type="file" accept=".sldprt" multiple hidden><label for="reference-mode">建模方式</label><select id="reference-mode"><option value="dimensions">按尺寸建模</option><option value="approximate">外观尝试，允许估计比例</option></select></div>
-        <div class="reference-controls"><button type="button" id="drawing-upload-button">添加二维图纸</button><input id="drawing-files" type="file" accept=".dxf,.dwg,.pdf" hidden><span class="small-note">DXF/DWG精确拉伸，不消耗模型Token；PDF按图片识别</span></div>
+        <div class="reference-controls"><button type="button" id="drawing-upload-button">添加二维图纸</button><input id="drawing-files" type="file" accept=".dxf,.dwg,.pdf" hidden><span class="small-note">DXF/DWG精确轮廓、阶梯三视图及孔深 · 0 Token；PDF按图片识别</span></div>
+        <div class="small-note"><a href="/api/drawing-example" download="three-views-blind-counterbore.dxf">下载三视图、盲孔及沉孔示例图纸</a>，上传后输入“按三视图及孔标注建模”。</div>
         <label class="sr-only" for="message">输入设计需求</label>
         <textarea id="message" rows="2" placeholder="描述设计需求，或上传图片并补充尺寸。"></textarea>
         <div class="composer-actions"><span id="composer-hint">Enter 发送，Shift + Enter 换行</span><button type="button" id="stop-task" class="stop" hidden>停止任务</button><button type="submit" id="send-task" class="primary">发送需求</button></div>

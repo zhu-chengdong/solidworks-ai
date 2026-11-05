@@ -23,7 +23,7 @@ from .reference_inputs import ReferenceStore, MAX_IMAGE_BYTES
 from .cad_inputs import CadStore,MAX_CAD_BYTES
 from .drawing_inputs import DrawingStore,MAX_DRAWING_BYTES
 
-VERSION = "0.6.0-rc1"
+VERSION = "0.7.0-rc3"
 WEB_ROOT = Path(__file__).resolve().parent / "web"
 APP_ID = "local-solidworks-research-workbench"
 
@@ -103,6 +103,11 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path == "/health":
                 self.send_json({"ok": True, "app": APP_ID, "version": VERSION})
+            elif path == '/api/drawing-example':
+                import io
+                from drawing2cad.examples import stepped_block
+                stream=io.StringIO();stepped_block(None).write(stream)
+                self.send_bytes(stream.getvalue().encode('utf-8'),'application/dxf',download='three-views-blind-counterbore.dxf')
             elif path == "/api/state":
                 self.send_json({"version": VERSION, "settings": self.server.settings.public(),
                     "jobs": self.server.manager.list(), "active_job": self.server.manager.active,

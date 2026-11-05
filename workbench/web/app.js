@@ -243,7 +243,7 @@ $('drawing-files').addEventListener('change',async()=>{
   try{const file=files[0];if(file.size>20*1024*1024)throw new Error('每张图纸最多20MB。');
     const response=await fetch('/api/drawing-uploads',{method:'POST',headers:{'X-App-Token':token,'Content-Type':'application/octet-stream','X-File-Name':encodeURIComponent(file.name)},body:file});
     const result=await response.json();if(!response.ok)throw new Error(result.error||'图纸上传失败。');drawingAttachments.push(result);renderAttachments();
-    notice(result.kind==='vector'?'图纸已加入。请输入“厚度8毫米，所有内轮廓均为通孔”等要求；多个视图会先请你选择。':'PDF已转成参考图片；需要支持图片的模型。请补充关键尺寸，扫描图不会被当作精确CAD坐标。');
+    notice(result.kind==='vector'?'图纸已加入。可输入“按三视图及孔标注建模”，或补充厚度、孔深。缺少视图对应、深度或盲孔底形时会先询问；当前支持阶梯外形及俯视图中的Z向孔。':'PDF已转成参考图片；需要支持图片的模型。请补充关键尺寸，扫描图不会被当作精确CAD坐标。');
   }catch(error){notice(error.message);}finally{uploading=false;render();}
 });
 $('upload-button').addEventListener('click',()=>$('image-files').click());

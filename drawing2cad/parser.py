@@ -93,7 +93,7 @@ def _loops(segments):
     return closed,duplicates
 
 
-def inspect_dxf(path,unit_override=None):
+def inspect_dxf(path,unit_override=None,advanced=False):
     try:doc=ezdxf.readfile(path)
     except (OSError,ezdxf.DXFError,UnicodeError) as exc:raise DrawingError('DXF文件无法读取，请重新导出有效DXF。') from exc
     count=len(doc.modelspace())
@@ -104,17 +104,31 @@ def inspect_dxf(path,unit_override=None):
     try:scale=units.conversion_factor(chosen,units.MM)
     except (ValueError,TypeError,KeyError) as exc:raise DrawingError('图纸长度单位暂不支持。') from exc
     if declared and unit_override and declared!=chosen:raise DrawingError('补充单位与DXF声明单位不一致，请先修正图纸单位。')
-    ignored=Counter();unsupported=Counter();segments=[];dimensions=[]
+    ignored=Counter();unsupported=Counter();segments=[];dimensions=[];annotations=[];leaders=[];leader_strokes=[];hidden_segments=[]
+    for e in doc.modelspace().query('TEXT MTEXT'):
+        text=e.plain_text() if e.dxftype()=='MTEXT' else str(e.dxf.text)
+        annotations.append({'text':text,'point_mm':_point(e.dxf.insert,scale),'handle':e.dxf.handle})
+    full_text=' '.join(a['text'] for a in annotations)
+    advanced=bool(advanced or re.search(r'盲孔|沉孔|BLIND|CBORE|COUNTERBORE|⌴|↧|非通孔|非贯穿|不(?:是)?通孔|NOT\s+THR(?:OUGH|U)|(?:DIA|[Ø⌀Φφ]|直径).{0,30}(?:DEPTH|深)',full_text,re.I)
+        or all(re.search(p,full_text,re.I) for p in [r'主视|\bFRONT\b',r'俯视|\bTOP\b',r'右视|\bRIGHT\b']))
     # Text/DIMENSION blocks are never decomposed into phantom part outlines.
     def entities(items,inherited=None,depth=0):
         if depth>12:raise DrawingError('图块嵌套过深。')
         for entity in items:
             if entity.dxftype()=='DIMENSION':yield entity;continue
+            if advanced and entity.dxftype()=='INSERT' and re.fullmatch(r'SW_HATCH_\d+',entity.dxf.name,re.I):
+                ignored['native_hatch_graphics']+=1;continue
             layer=str(entity.dxf.get('layer','0'))
             if layer=='0' and inherited:layer=inherited
             record=doc.layers.get(layer) if layer in doc.layers else None
+            if advanced and entity.dxftype()=='LEADER' and not (record and (record.is_off() or record.is_frozen())):
+                yield entity;continue
             lt=str(entity.dxf.get('linetype','BYLAYER')).upper()
             if lt=='BYLAYER' and record:lt=str(record.dxf.linetype).upper()
+            hidden=bool(re.search(r'HIDDEN|隐藏|虚线',layer,re.I) or re.search(r'HIDDEN|DASHED',lt,re.I))
+            if advanced and hidden and not (record and (record.is_off() or record.is_frozen())):
+                if entity.dxftype()=='LINE':hidden_segments.append([_point(entity.dxf.start,scale),_point(entity.dxf.end,scale)])
+                else:raise DrawingError('隐藏图层含非直线内部结构，请补充剖视或明确对应的孔特征。')
             if IGNORED_LAYERS.search(layer) or (record and (record.is_off() or record.is_frozen())) or lt not in {'BYLAYER','BYBLOCK','CONTINUOUS'}:
                 ignored['layer_or_linetype']+=1;continue
             if entity.dxftype()=='INSERT':
@@ -125,6 +139,10 @@ def inspect_dxf(path,unit_override=None):
             else:yield entity
     for e in entities(doc.modelspace()):
         kind=e.dxftype()
+        if kind=='LEADER' and advanced:
+            leaders.append({'points_mm':[_point(v,scale) for v in e.vertices],'handle':e.dxf.handle});continue
+        if kind=='LINE' and advanced and re.search(r'LEADER|引线',e.dxf.layer,re.I):
+            leader_strokes.append([_point(e.dxf.start,scale),_point(e.dxf.end,scale)]);continue
         if kind=='DIMENSION':
             measured=e.get_measurement();text=str(e.dxf.get('text','<>')).strip()
             style=doc.dimstyles.get(e.dxf.dimstyle);factor=float(e.get_acad_dstyle({}).get('dimlfac',style.dxf.get('dimlfac',1.)))
@@ -163,11 +181,42 @@ def inspect_dxf(path,unit_override=None):
         else:unsupported[kind]+=1
         if len(segments)>600:raise DrawingError('有效轮廓超过600段，请简化或单独导出零件。')
     if unsupported:raise DrawingError('有效图层含暂不支持的实体：'+', '.join(unsupported)+'。请导出LINE/ARC/CIRCLE/LWPOLYLINE轮廓。')
+    if leader_strokes:
+        from shapely.geometry import LineString,Point
+        from shapely.ops import unary_union
+        network=unary_union([LineString(line).buffer(1e-4) for line in leader_strokes])
+        components=list(network.geoms) if network.geom_type=='MultiPolygon' else [network]
+        centers={tuple(s['center']) for s in segments if s['kind']=='circle'}
+        for i,component in enumerate(components):
+            targets=[c for c in centers if component.distance(Point(c))<1e-4]
+            if not targets:continue
+            if len(targets)!=1:raise DrawingError('导出的孔引线交叉关联多个孔，无法可靠对应标注。')
+            notes=sorted([(component.distance(Point(a['point_mm'])),a) for a in annotations if re.search(r'\bH\d+\b|盲孔|沉孔|BLIND|CBORE|DIA|[Ø⌀]',a['text'],re.I)],key=lambda item:item[0])
+            if notes and notes[0][0]<15:
+                if len(notes)>1 and abs(notes[1][0]-notes[0][0])<1e-4:raise DrawingError('导出引线附近有多个同距孔标注。')
+                leaders.append({'points_mm':[list(targets[0]),notes[0][1]['point_mm']],'handle':'leader-strokes-'+str(i),'reconstructed_from_exported_strokes':True})
     if not segments:raise DrawingError('模型空间没有可用轮廓。请从模型空间导出目标视图。')
     for s in segments:
         if s['kind']=='line' and math.dist(s['start'],s['end'])<=TOL:raise DrawingError('存在零长度线段。')
         if 'radius' in s and (not math.isfinite(s['radius']) or s['radius']<=TOL):raise DrawingError('存在无效圆弧半径。')
-    loops,duplicates=_loops(segments);records=[]
+    details=[]
+    noncircles=[s for s in segments if s['kind']!='circle']
+    if advanced and noncircles and all(s['kind']=='line' for s in noncircles):
+        from shapely.geometry import LineString
+        from shapely.ops import polygonize,unary_union
+        network=unary_union([LineString([s['start'],s['end']]) for s in noncircles])
+        solid=unary_union(list(polygonize(network)))
+        if solid.is_empty:raise DrawingError('三视图轮廓未闭合。')
+        polygons=list(solid.geoms) if solid.geom_type=='MultiPolygon' else [solid]
+        if any(not solid.buffer(TOL).covers(LineString([s['start'],s['end']])) for s in noncircles):raise DrawingError('视图外存在开放线段，请将辅助线放在专用图层。')
+        loops=[]
+        for p in polygons:
+            vertices=list(p.exterior.coords)
+            loops.append([{'kind':'line','start':list(a),'end':list(b)} for a,b in zip(vertices,vertices[1:])])
+        loops += [[s] for s in segments if s['kind']=='circle']
+        details=noncircles;duplicates=len(noncircles)-len({repr(s) for s in noncircles})
+    else:loops,duplicates=_loops(segments)
+    records=[]
     for loop in loops:
         points=[]
         for s in loop:points.extend(samples(s)[:-1])
@@ -183,14 +232,14 @@ def inspect_dxf(path,unit_override=None):
     views=[]
     for i,root in enumerate(roots,1):
         children=[r for r in records if r is not root and root['polygon'].contains(r['polygon'])]
-        if any(a is not b and a['polygon'].contains(b['polygon']) for a in children for b in children):raise DrawingError('轮廓包含多层嵌套岛，请明确拆分实体。')
+        if not advanced and any(a is not b and a['polygon'].contains(b['polygon']) for a in children for b in children):raise DrawingError('轮廓包含多层嵌套岛，请明确拆分实体。')
         views.append({'id':i,'bounds_mm':exact_bounds(root['segments']),'area_mm2':root['area_mm2']-sum(c['area_mm2'] for c in children),'outer':root['segments'],'inner':[c['segments'] for c in children]})
-    return {'version':1,'source_name':Path(path).name,'units':chosen,'mm_per_unit':scale,'views':views,'dimensions':dimensions,'dimension_conflicts':sum(d['conflict'] for d in dimensions),'ignored':dict(ignored),'duplicate_entities_removed':duplicates,'geometry':'exact lines/arcs/circles; samples are validation only'}
+    return {'version':2,'advanced':advanced,'annotations':annotations,'leaders':leaders,'detail_segments':details,'hidden_segments':hidden_segments,'source_name':Path(path).name,'units':chosen,'mm_per_unit':scale,'views':views,'dimensions':dimensions,'dimension_conflicts':sum(d['conflict'] for d in dimensions),'ignored':dict(ignored),'duplicate_entities_removed':duplicates,'geometry':'exact lines/arcs/circles; samples are validation only'}
 
 
 def options(text):
     text=' '.join(text) if isinstance(text,list) else str(text)
-    if re.search(r'盲孔|沉孔|沉头|螺纹|抽壳|放样|装配|拔模|旋转体|曲面|不(?:是|做|要)?通孔|不贯穿|blind|counterbore|countersink|thread|loft|assembly',text,re.I):
+    if re.search(r'沉头|螺纹|抽壳|放样|装配|拔模|旋转体|曲面|countersink|thread|loft|assembly',text,re.I):
         raise DrawingError('这个精确图纸入口只支持等厚拉伸与贯穿内轮廓。检测到盲孔、沉孔、装配等其他特征要求，请另建工程任务明确尺寸；本次不会省略这些特征后继续建模。')
     thicknesses=re.findall(r'(?:厚度|板厚|厚|thickness\s*[=:]?)\s*([0-9]+(?:\.[0-9]+)?)\s*(毫米|mm|厘米|cm|英寸|inch|米|m)?',text,re.I)
     thickness=None
@@ -201,12 +250,15 @@ def options(text):
     m=re.search(r'(?:图纸单位|drawing units?)\s*(?:为|是|[:=])?\s*(毫米|mm|厘米|cm|英寸|inch|米|m)',text,re.I)
     if m:unit={'毫米':'mm','厘米':'cm','英寸':'inch','米':'m'}.get(m[1].lower(),m[1].lower())
     selected=re.findall(r'(?:视图|view)\s*([1-9][0-9]?)',text,re.I)
-    return {'thickness_mm':thickness,'thickness_unit_explicit':bool(thicknesses and thicknesses[-1][1]),'unit_override':unit,'view_id':int(selected[-1]) if selected else None,
+    return {'advanced':bool(re.search(r'三视图|盲孔|沉孔|不(?:是|做|要)?通孔|不贯穿|blind|counterbore',text,re.I)),'request_text':text,'thickness_mm':thickness,'thickness_unit_explicit':bool(thicknesses and thicknesses[-1][1]),'unit_override':unit,'view_id':int(selected[-1]) if selected else None,
             'through':bool(re.search(r'通孔|贯穿|through',text,re.I)),
             'ignore_dimensions':bool(re.search(r'忽略标注|ignore dimensions',text,re.I))}
 
 
 def select_spec(inspection,opts):
+    if inspection.get('advanced') or opts.get('advanced'):
+        from .advanced import plan_advanced
+        return plan_advanced(inspection,opts)
     views=inspection['views'];chosen=opts['view_id']
     questions=[]
     if len(views)>1 and chosen is None:questions.append('图纸有多个独立轮廓，请看识别图并指定“视图1”等编号。')

@@ -27,13 +27,19 @@ async def run_drawing(engine,job):
             if record['source_sha256']!=item['sha256'] or hashlib.sha256(target.read_bytes()).hexdigest()!=record['converted_sha256']:raise UserFacingError('转换图纸校验失败。')
             source=target
         job.check_stop()
-        inspection=inspect_dxf(source,opts['unit_override'])
+        inspection=inspect_dxf(source,opts['unit_override'],advanced=opts.get('advanced',False))
         (job.output_dir/'drawing-inspection.json').write_text(json.dumps(inspection,ensure_ascii=False,indent=2),encoding='utf-8')
         preview(inspection,job.output_dir/'drawing-contours.png')
         spec,question=select_spec(inspection,opts)
         if question:
             job.collect_artifacts();job.finish('clarify',question);return
-        job.set_plan({'summary':f"使用视图{spec['id']}，沿原图XY轮廓拉伸{spec['thickness_mm']:g}毫米，内轮廓全部贯穿。",'action':'create','needs_clarification':False,'supported':True,'source':'exact_vector','steps':['识别轮廓与单位','建立尺寸约束草图','原生拉伸','保存重开、核对几何并导出STEP和四视图'],'geometry':{'area_mm2':spec['area_mm2'],'thickness_mm':spec['thickness_mm'],'view_id':spec['id']}})
+        if spec.get('kind'):
+            summary=('按三视图重建阶梯实体' if spec['kind']=='orthographic' else '按图纸外轮廓建模')+f"，尺寸{'×'.join(f'{v:g}' for v in spec['size_mm'])}毫米，读取{len(spec['holes'])}个孔标注并按各自深度建孔。"
+            geometry={'size_mm':spec['size_mm'],'holes':spec['holes'],'views':spec['views'],'assumptions':spec['assumptions']}
+        else:
+            summary=f"使用视图{spec['id']}，沿原图XY轮廓拉伸{spec['thickness_mm']:g}毫米，内轮廓全部贯穿。"
+            geometry={'area_mm2':spec['area_mm2'],'thickness_mm':spec['thickness_mm'],'view_id':spec['id']}
+        job.set_plan({'summary':summary,'action':'create','needs_clarification':False,'supported':True,'source':'exact_vector','steps':['识别轮廓、视图、尺寸和孔标注','建立尺寸约束草图和原生特征','保存重开，回读孔深与几何','导出STEP、四视图及交付包'],'geometry':geometry})
         request={'source_file':item['file'],'source_sha256':item['sha256'],'options':opts}
         (job.output_dir/'drawing-spec.json').write_text(json.dumps(request,ensure_ascii=False,indent=2),encoding='utf-8')
         job.check_stop();job.set_phase('executing','按精确轮廓建立原生尺寸驱动零件');job.owns_document=True

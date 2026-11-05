@@ -80,6 +80,15 @@ class WebTests(unittest.TestCase):
         self.assertIn("Content-Security-Policy", headers)
         self.assertEqual(self.request("GET", "/health")[0], 200)
 
+    def test_drawing_example_is_a_real_dimensioned_dxf_without_credentials(self):
+        import io,ezdxf
+        status,body,headers=self.request('GET','/api/drawing-example')
+        self.assertEqual(status,200);self.assertIn('attachment',headers['Content-Disposition'])
+        drawing=ezdxf.read(io.StringIO(body.decode('utf8')))
+        self.assertEqual(drawing.units,4);self.assertGreaterEqual(len(drawing.modelspace().query('DIMENSION')),6)
+        self.assertEqual(len(drawing.modelspace().query('LEADER')),5)
+        self.assertIn(b'FLAT BOTTOM',body)
+
     def test_another_instance_cannot_share_our_listening_port(self):
         with self.assertRaises(OSError):
             WorkbenchServer(('127.0.0.1', self.server.server_port), self.store, self.manager)

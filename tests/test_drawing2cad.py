@@ -81,7 +81,7 @@ class DrawingTests(unittest.TestCase):
         raw=io.BytesIO();pdf.save(raw);pdf.close()
         with self.assertRaisesRegex(UserFacingError,'4页'):DrawingStore(self.root/'drawings',ReferenceStore(self.root/'refs')).add(raw.getvalue(),'too-many.pdf')
     def test_unsupported_3d_intent_not_silently_omitted(self):
-        for text in ['厚度8mm，内孔不贯穿','厚度8mm，全部通孔，另外添加沉孔','建模并装配']:
+        for text in ['沉头孔，90度','建模并装配','创建曲面']:
             with self.assertRaises(DrawingError):options(text)
     def test_classic_2d_polyline(self):
         d=ezdxf.new('R12');d.units=4;d.modelspace().add_polyline2d([(0,0),(20,0),(20,10),(0,10)],close=True);path=self.root/'r12.dxf';d.saveas(path)

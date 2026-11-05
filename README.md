@@ -2,9 +2,9 @@
 
 ## 下载与开始使用
 
-**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.6.0-rc1/SolidWorksAI-0.6.0-rc1-windows-x64.zip)**
+**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.7.0-rc3/SolidWorksAI-0.7.0-rc3-windows-x64.zip)**
 
-当前版本为 **0.6.0-rc1 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.6.0-rc1)。
+当前版本为 **0.7.0-rc3 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.7.0-rc3)。
 
 1. 准备 Windows 64 位电脑，并安装、激活 SolidWorks 2024。
 2. 点击上面的下载链接，下载后右键压缩包，选择“全部解压缩”。
@@ -29,10 +29,15 @@ SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年
 “厚度8毫米，所有内轮廓均为通孔”。多个轮廓时程序先显示编号识别图，再回复
 “使用视图1”即可继续。这个受限流程无需配置API Key，Token消耗为0。
 
-当前支持模型空间的等厚拉伸件、精确直线/圆弧、圆孔和贯穿闭合槽，保留图纸原文件。
-DWG由本机SolidWorks原生转换；只读取Model空间，不混入其他图纸或默认图框。
-程序核对单位及标注与坐标的冲突，不自动补缝或猜厚度。盲孔、沉孔、螺纹、曲面、
-装配及任意多视图重建尚未通过该入口验收。详细参考来源及范围见
+三视图可输入“按三视图及孔标注建模”。需要FRONT/TOP/RIGHT或中文视图标识，亦可在对话中指定编号。
+当前联合重建覆盖直角阶梯外形；平底盲孔、通孔和圆柱沉孔按俯视图沿Z向创建，分别读取局部入口面和孔深。
+例如图纸孔引线标注`H1 DIA8 BLIND DEPTH12`或`H2 DIA6.6 THRU CBORE DIA13 DEPTH5`。
+缺少深度或盲孔底形先询问；程序不把同心圆直接猜成沉孔。页面提供可下载的完整示例图纸。
+
+单视图继续支持等厚拉伸件、精确直线/圆弧、圆孔和贯穿闭合槽，保留图纸原文件。
+DWG由本机SolidWorks原生转换，只读取Model空间；已处理原生导出打散孔引线的情况。
+程序核对单位、标注冲突、保存重开后的孔深、圆柱段和平底、三视图投影及草图可编辑性。
+斜面或曲线三视图外形、侧向孔、钻尖/锥底、沉头孔、螺纹、曲面及装配重建不属于此入口的验收范围。详细来源及范围见
 [`drawing2cad/REFERENCES.md`](drawing2cad/REFERENCES.md)。
 
 PDF支持1至4页，在本机转成参考图片，仍需支持图片的模型和关键尺寸确认。

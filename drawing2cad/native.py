@@ -7,6 +7,14 @@ from pathlib import Path
 def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def artifact_paths(task):
+    # SW2024 refuses to open a second document with the same base title even
+    # when the directories differ. Stable task-specific names avoid that clash.
+    suffix=hashlib.sha256(str(Path(task).resolve()).casefold().encode('utf8')).hexdigest()[:12]
+    part=Path(task)/('DrawingPart_'+suffix+'.SLDPRT')
+    return part,part.with_suffix('.step')
+
+
 def pinned_source(path,sha256,allowed_root):
     source=Path(path).resolve();root=Path(allowed_root).resolve()
     if (not source.is_relative_to(root) or source.parent.name!='drawings' or source.parent.parent.name!='inputs'
@@ -96,15 +104,18 @@ def build_drawing(app,spec_path,allowed_root):
         vector=task/'drawing-converted.dxf'
         record=json.loads(vector.with_suffix('.conversion.json').read_text(encoding='utf-8'))
         if record['source_sha256']!=request['source_sha256'] or digest(vector)!=record['converted_sha256']:raise ValueError('Converted drawing provenance mismatch')
-    inspection=inspect_dxf(vector,request['options'].get('unit_override'))
+    inspection=inspect_dxf(vector,request['options'].get('unit_override'),advanced=request['options'].get('advanced',False))
     spec,question=select_spec(inspection,request['options'])
     if question:raise DrawingError(question)
     # A durable reservation prevents retrying a write accepted before a timeout.
     marker=task/'drawing-native-started.json'
     with marker.open('x',encoding='utf-8') as stream:json.dump({'source_sha256':request['source_sha256'],'view':spec['id']},stream)
-    output=task/'DrawingPart.SLDPRT'
+    output,step_path=artifact_paths(task)
     if output.exists():raise ValueError('Existing native model cannot be replaced')
     automation=native_automation(app)
+    if spec.get('kind') in {'orthographic','profile_holes'}:
+        from .native_advanced import build
+        return build(app,automation,spec,task,source,request['source_sha256'])
     made=automation.create_new_part()
     if not made.get('success'):raise RuntimeError('Native part creation failed')
     doc=app.ActiveDoc;origin=[(spec['bounds_mm'][0]+spec['bounds_mm'][2])/2,(spec['bounds_mm'][1]+spec['bounds_mm'][3])/2]
@@ -151,7 +162,7 @@ def build_drawing(app,spec_path,allowed_root):
     doc=open_document(app,str(output),read_only=False,silent=True,raise_on_error=True)
     reopened=_measure(automation,doc,spec);reopened_quality=inspect_model_sketches(doc)
     if not reopened['passed'] or reopened_quality['status']!='pass':raise RuntimeError('Saved/reopened model failed geometry or editability readback')
-    step=export_full_step(app,doc,task/'DrawingPart.step')
+    step=export_full_step(app,doc,step_path)
     from solidworks_mcp.automation.com_utils import resolve_solidworks_constant as constant
     hide=constant('swViewDisplayHideAllTypes');option=constant('swDetailingNoOptionSpecified')
     old=doc.Extension.GetUserPreferenceToggle(hide,option)
@@ -163,7 +174,7 @@ def build_drawing(app,spec_path,allowed_root):
     if digest(source)!=request['source_sha256']:raise RuntimeError('Original drawing changed')
     report={'status':'ok','success':True,'document':{'title':str(get(doc,'GetTitle')),'path':str(output),'type':1},'geometry':measured,'saved_reopened_geometry':reopened,'sketch_quality':reopened_quality,'initial_sketch_quality':initial,'source_sha256':request['source_sha256'],'source_unchanged':True,'selected_view':spec['id'],'dimension_policy':spec['dimension_policy'],'step':step,'previews':previews,'native_only_audit':automation.native_only_audit,'paid_model_calls':0}
     (task/'drawing-acceptance.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
-    files=[output,task/'DrawingPart.step',task/'drawing-acceptance.json',task/'drawing-inspection.json',task/'drawing-contours.png',task/'preview-manifest.json']+[task/v['file'] for v in previews['views']]
+    files=[output,step_path,task/'drawing-acceptance.json',task/'drawing-inspection.json',task/'drawing-contours.png',task/'preview-manifest.json']+[task/v['file'] for v in previews['views']]
     files=[p for p in files if p.is_file()]
     (task/'SHA256SUMS-drawing.txt').write_text('\n'.join(digest(p)+'  '+p.relative_to(task).as_posix() for p in files)+'\n',encoding='utf-8')
     package=task/'Drawing_delivery.zip'
