@@ -158,7 +158,9 @@ def apply(app,doc,operations):
     from scripts.sw_connect import get_com_member as get
     from solidworks_mcp.automation.com_utils import typed
     kinds={'clearance':(2,144),'counterbore':(0,139),'countersink':(1,140),'tapped':(4,147)};results=[]
+    def volume():return sum(float(list(get(b,'GetMassProperties',1000.))[3])*1e9 for b in get(doc,'GetBodies2',0,False) or [])
     for i,op in enumerate(operations):
+        initial_volume=volume()
         point,normal=entry(doc,op);kind,fastener=kinds[op.kind];through=op.depth_mm is None;diameter=-1.
         if op.thread_representation=='modeled':
             from .threads import MetricThread,definition
@@ -177,7 +179,9 @@ def apply(app,doc,operations):
                 if not math.isclose(evidence.get('TapDrillDiameter_mm') or evidence.get('ThruTapDrillDiameter_mm'),thread.carrier_diameter_mm,abs_tol=1e-4):raise RuntimeError('Native tap drill override differs from the modeled-thread carrier')
                 made=create_thread(app,doc,[thread])[0];thread_feature=doc.FeatureByName(made['native']['feature']);thread_feature.Name=str(get(feature,'Name'))+'_Thread'
                 evidence=read(doc,str(get(feature,'Name')),op)
-            results.append({'operation':op.model_dump(),'native':evidence,'position_sketch':quality})
+            removed=initial_volume-volume()
+            if removed<=0:raise RuntimeError('Standard hole removed no material')
+            results.append({'operation':op.model_dump(),'native':evidence,'position_sketch':quality,'removed_volume_mm3':removed})
         finally:doc.ClearSelection2(True)
     return results
 

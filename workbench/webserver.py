@@ -23,7 +23,7 @@ from .reference_inputs import ReferenceStore, MAX_IMAGE_BYTES
 from .cad_inputs import CadStore,MAX_CAD_BYTES
 from .drawing_inputs import DrawingStore,MAX_DRAWING_BYTES
 
-VERSION = "0.11.0-rc3"
+VERSION = "0.12.0-rc2"
 WEB_ROOT = Path(__file__).resolve().parent / "web"
 APP_ID = "local-solidworks-research-workbench"
 

@@ -4,6 +4,16 @@ English | [简体中文](CHANGELOG.md)
 
 Published tags, their original notes and downloads remain in [GitHub Releases](https://github.com/zhu-chengdong/solidworks-ai/releases). Unpublished local candidates are not listed as public releases. All current releases are Windows x64 prereleases; native CAD acceptance targets SOLIDWORKS 2024.
 
+## 0.12.0-rc2
+
+- Adds native associative hole linear patterns, perpendicular two-direction grids, full-circle circular patterns and XZ/YZ mirrors through natural-language plans. No per-hole copy substitution.
+- Supports local +Z Hole Wizard clearance, counterbore and countersink seeds, signed X/Y linear directions, and explicit instance counts including the seed. Circular patterns require a unique native cylindrical axis at the exact requested center.
+- Reads native seed linkage, counts and spacings; independently checks actual cylinder axes, radii, axial intervals, complete removal volume and preservation of existing holes. Checks survive save/reopen and actual STEP reimport.
+- A 180x120x12 mount combines a 2x3 grid, six-counterbore bolt circle and mirror for 14 physical holes, with an independent exact-volume check. Additional trials cover negative directions, YZ mirrors, countersinks/blind holes and a 22-to-24-to-22 mm parameter cycle on a separate copy.
+- Adds a bilingual peer capability comparison and implementation roadmap. Reduces duplicate cross-process COM reads inside a locked readback.
+- Fixes a stale three-preview capability hint. Planner view declarations now derive directly from the native isometric/front/top/right renderer, with a regression contract test to prevent false unsupported decisions.
+- General body/component/offset-plane mirrors, arbitrary existing-feature replication, modeled-thread patterns and SOLIDWORKS2026 are not qualified by this release.
+
 ## 0.11.0-rc3
 
 - Adds native ISO Hole Wizard clearance, counterbore, countersink and tapped holes in coarse M3/M4/M5/M6/M8/M10/M12 sizes, with standard-table dimensions and close/normal/loose fits. Supports signed principal-axis planar entries and explicit blind/Through All conditions.

@@ -63,6 +63,9 @@ async def diagnose():
     from engineering.standard_holes import StandardHole,apply as apply_standard_holes,position as read_hole_position
     from engineering.threads import MetricThread,apply as apply_threads,read as read_thread
     from engineering.feature_quality import classify as classify_feature_quality
+    from engineering.patterns import HolePattern,apply as apply_patterns,read as read_pattern,geometry as pattern_geometry
+    HolePattern(kind='linear',seed_hole_index=0,spacing_mm=20)
+    if not all(callable(f) for f in (apply_patterns,read_pattern,pattern_geometry)):raise RuntimeError('Packaged native pattern adapter missing')
     StandardHole(kind='tapped',size='M6',point_mm=[20,10,20],depth_mm=12,thread_representation='modeled',thread_depth_mm=8)
     MetricThread(size='M8',internal=False,point_mm=[0,0,20],length_mm=8)
     if not all(callable(f) for f in (apply_standard_holes,read_hole_position,apply_threads,read_thread,classify_feature_quality)):raise RuntimeError('Packaged native standard/thread adapter missing')
@@ -94,6 +97,6 @@ async def diagnose():
         vault.remove('diagnostic', probe_url)
     return {"environment": installation_status(), "tools": len(tools.tools), "health": health,
             "native_modules_imported": True, "reference_compiler_imported": reference_ready,"native_loft_imported":loft_ready,"engineering_imported":engineering_ready,
-            "model_called": False, "cad_connected": False,"standard_holes_and_threads_imported":True,"local_dimension_adapter_imported":True,"drawing_parser_imported":drawing_ready,"advanced_drawing_imported":advanced_ready,"analytic_drawing_imported":True,"pdf_page_rendered":pdf_ready,
+            "model_called": False, "cad_connected": False,"hole_patterns_imported":True,"standard_holes_and_threads_imported":True,"local_dimension_adapter_imported":True,"drawing_parser_imported":drawing_ready,"advanced_drawing_imported":advanced_ready,"analytic_drawing_imported":True,"pdf_page_rendered":pdf_ready,
             "optional_pdf_review": False, "vault_probe_before":vault_before,"vault_probe_after":credential_probe(),
             "credential_dummy_roundtrip_and_cleanup": vault_roundtrip}

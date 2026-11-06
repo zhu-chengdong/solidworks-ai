@@ -44,7 +44,7 @@ def mate_readback(doc,spec,record):
     return {'passed':len(rows)==len(planned) and all(r['verified'] for r in rows),'mates':rows}
 
 
-def verify_assembly_step(app,doc,step,verification,expected_bodies,geometry_validator=None):
+def verify_assembly_step(app,doc,step,verification,expected_bodies,geometry_validator=None,geometry_label='thread_geometry'):
     from .native import _get,_exact_bounds,_atomic
     from scripts.sw_connect import open_document
     from scripts.sw_assembly import _activate_model_document
@@ -123,8 +123,8 @@ def verify_assembly_step(app,doc,step,verification,expected_bodies,geometry_vali
                 'default_imported_volume_mm3':mass['volume_mm3'],'snapshot_volume_mm3':snapshot_volume}
         if not passed:raise RuntimeError('Assembly STEP reimport differs from the native instance geometry: '+str(result))
         if geometry_validator is not None:
-            result['thread_geometry']=geometry_validator(imported)
-            if not result['thread_geometry']['passed']:raise RuntimeError('Reimported STEP thread geometry failed')
+            result[geometry_label]=geometry_validator(imported)
+            if not result[geometry_label]['passed']:raise RuntimeError('Reimported STEP feature geometry failed')
         return result
     finally:
         if imported is not None:app.CloseDoc(str(_get(imported,'GetTitle')))

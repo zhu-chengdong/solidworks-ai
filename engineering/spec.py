@@ -12,6 +12,7 @@ from .dimensions import DimensionChange
 from .finishing import EdgeTreatment
 from .standard_holes import StandardHole
 from .threads import MetricThread
+from .patterns import HolePattern,validate_patterns
 
 
 def _plane_normal(instance,plane):
@@ -41,6 +42,7 @@ class PartSpec(BaseModel):
     edge_treatments:list[EdgeTreatment]=Field(default_factory=list,max_length=8)
     standard_holes:list[StandardHole]=Field(default_factory=list,max_length=12)
     metric_threads:list[MetricThread]=Field(default_factory=list,max_length=8)
+    hole_patterns:list[HolePattern]=Field(default_factory=list,max_length=8)
     color_rgb:list[Annotated[float,Field(ge=0,le=1)]]=Field(default_factory=lambda:[.72,.77,.83],min_length=3,max_length=3,description='Normalized RGB channels, each from 0 to 1; do not use 0 to 255 values.')
 
     @model_validator(mode='after')
@@ -56,6 +58,7 @@ class PartSpec(BaseModel):
         if self.dimension_changes and self.shape!='existing':raise ValueError('Local dimension edits require an uploaded existing part')
         if len({c.name for c in self.dimension_changes})!=len(self.dimension_changes):raise ValueError('Duplicate dimension edit')
         points=[h.point_mm for h in self.standard_holes]
+        validate_patterns(self.standard_holes,self.hole_patterns)
         if any(math.dist(p,q)<1e-4 for i,p in enumerate(points) for q in points[i+1:]):raise ValueError('Use a single compound standard-hole operation at each entry')
         if any(math.dist(t.point_mm,h.point_mm)<1e-4 for t in self.metric_threads for h in self.standard_holes):raise ValueError('Use the standard hole modeled option instead of a duplicate thread operation')
         if self.shape=='shaft' and any(not t.internal and abs(t.nominal_mm-self.diameter_mm)>1e-5 for t in self.metric_threads):raise ValueError('External metric thread requires its nominal shaft diameter')
@@ -81,7 +84,7 @@ class PartSpec(BaseModel):
         return ReferenceGeometry(family='prism',points=points,depth_mm=depth,holes=self.holes)
 
     def expected_volume(self,include_treatments=True):
-        if include_treatments and (self.edge_treatments or self.standard_holes or self.metric_threads):return None
+        if include_treatments and (self.edge_treatments or self.standard_holes or self.metric_threads or self.hole_patterns):return None
         if self.shape=='existing':return None
         if self.shape=='shaft':return math.pi*(self.diameter_mm/2)**2*self.length_mm
         volume=self.geometry().expected_volume()
@@ -176,6 +179,8 @@ class DesignSpec(BaseModel):
 
 
 def skill_context():
+    from .previews import view_specs,IDENTITY
+    preview_views=list(view_specs(IDENTITY))
     """A small executable catalog, separate from unqualified upstream skill names."""
     return {
       'units':'mm; generated parts centered in XY, extend from z=0; shaft axis +Z; bracket profile XY extruded along +Z',
@@ -190,7 +195,8 @@ def skill_context():
       'native_design_workflow':{'tool':'solidworks_execute_design','status':'implemented and locally native-tested on SolidWorks2024',
         'execution':'The complete design is validated and staged by the application; the executor invokes this tool once. No separate tool names are required for the following built-in steps.',
         'built_in_checks':['create all native parts with fully defined sketches','insert repeated instances','add real coincident/distance/concentric mates','save and reopen the native assembly','read exact native bounds and volume','read actual mate entities and full constraint status','native interference detection','native STEP export and STEP reimport with body-count, bounds and volume checks'],
-        'built_in_delivery':['SLDASM with dependent SLDPRT','STEP','BOM CSV','three native preview PNGs','dependency ZIP with geometry-verification.json and SHA256 hashes'],
+        'built_in_delivery':['SLDASM with dependent SLDPRT','STEP','BOM CSV',f"{len(preview_views)} native preview PNGs ({', '.join(preview_views)})",'dependency ZIP with geometry-verification.json and SHA256 hashes'],
+        'preview_views':preview_views,
         'limits':'Static assemblies of the listed recipes; this does not certify load, manufacturing tolerances or motion.'},
       'editing':'Uploaded existing parts support true local dimension_changes: use exact name, before_value and unit from native dimension catalog, plus requested value. Preserve all other driving dimensions and features. Ambiguous dimension intent requires clarification. Parameter-less imported solids cannot be dimension-edited. For previous recipe designs, return a COMPLETE revised design preserving unspecified parts, dimensions and mates; create a new revision. Never overwrite originals.',
       'requirements':'ask only missing critical dimensions, interfaces, hole type and intended mating relationship; no arbitrary defaults for engineering parts; visual-only estimates require explicit user permission and assumptions',
@@ -200,5 +206,6 @@ def skill_context():
       'feature_order':'copy/edit driving dimensions; validate stock geometry; edge treatments; standard holes; standalone metric threads; rebuild/save/reopen and verify every native definition and real thread geometry',
       'native_standard_sketches':'The application creates fully constrained stock/position sketches without Fix. SOLIDWORKS Hole Wizard sections and library Thread profiles themselves may contain native Fix relations; these are native_standard_managed and remain editable through their standard feature, not generic sketch dimensions. Report actual native managed Fix counts separately, never claim every sketch has zero Fix and never remove native library constraints to fabricate that claim. Hole position at projected origin legitimately has zero independent coordinate dimensions but must have zero degrees of freedom and no Fix.',
       'thread_step_delivery':'Modeled threads require actual STEP reimport, exact body count/bounds/volume comparison and measured helical pitch/handedness from the reimported B-Rep. Native Thread blind depth and complete swept-profile axial range are reported separately; a partial end profile can extend beyond the helix depth. Do not claim manufacturing/full-thread engagement certification.',
+      'associative_hole_patterns':'Part.hole_patterns creates native linear (including perpendicular 2D grids), full-circle circular and XZ/YZ mirror features from zero-based seed_hole_index in this same part standard_holes list. Seeds must be +Z clearance/counterbore/countersink holes. Count includes the seed. Circular needs center_mm=[x,y] and an existing unique cylindrical face there, usually an explicit central hole. Do not add separate holes for copies. Do not silently substitute manual copies. Model-space cylindrical axes, radii, axial ranges, seed linkage, exact removed volume and actual STEP reimport are checked. Tapped/modeled-thread seeds, body/component/offset-plane mirrors and arbitrary existing feature replication are not qualified by this route.',
       'not_yet_qualified':'fine/imperial/pipe/multiple-start or non-Z real threads, gears, variable-radius/face/full-round fillets, mechanisms, tolerance design and manufacturing drawings need separate qualification; do not silently omit requested features',
       'skills':['solidworks-vibecad','solidworks-automation/part','solidworks-automation/assembly','solidworks-automation/review']}

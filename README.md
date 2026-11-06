@@ -6,9 +6,9 @@ Build editable parts and assemblies in your own **SOLIDWORKS 2024** using natura
 
 ## Download and start
 
-**[Download Windows x64 — includes the EXE](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.11.0-rc3/SolidWorksAI-0.11.0-rc3-windows-x64.zip)**
+**[Download Windows x64 — includes the EXE](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.12.0-rc2/SolidWorksAI-0.12.0-rc2-windows-x64.zip)**
 
-Current version: **0.11.0-rc3 prerelease**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.11.0-rc3).
+Current version: **0.12.0-rc2 prerelease**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.12.0-rc2).
 
 1. Install and activate your own SOLIDWORKS 2024 on Windows x64.
 2. Download the Windows ZIP and extract it completely.
@@ -19,10 +19,13 @@ The interface is currently Chinese; the repository provides English and [Chinese
 
 Upload a parametric SLDPRT and describe local dimension changes. The app inspects actual driving parameters, edits a separate copy and verifies it after reopening.
 
+See the [capability comparison and priorities](release_tools/CAPABILITY_ROADMAP.md).
+
 ## Version history
 
 | Release | Main changes |
 | --- | --- |
+| [0.12.0-rc2](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.12.0-rc2) | Add associative hole patterns and mirrors with geometric acceptance |
 | [0.11.0-rc3](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.11.0-rc3) | Add ISO Hole Wizard and geometrically verified metric threads |
 | [0.10.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.10.0-rc1) | Add verified native fillets and chamfers to structured part plans |
 | [0.9.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.9.0-rc1) | Add native local dimension editing through natural language |

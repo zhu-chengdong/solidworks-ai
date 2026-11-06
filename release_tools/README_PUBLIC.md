@@ -6,9 +6,9 @@
 
 ## 下载与开始使用
 
-**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.11.0-rc3/SolidWorksAI-0.11.0-rc3-windows-x64.zip)**
+**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.12.0-rc2/SolidWorksAI-0.12.0-rc2-windows-x64.zip)**
 
-当前版本为 **0.11.0-rc3 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.11.0-rc3)。
+当前版本为 **0.12.0-rc2 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.12.0-rc2)。
 
 1. 准备 Windows 64 位电脑，并安装、激活 SolidWorks 2024。
 2. 点击上面的下载链接，下载后右键压缩包，选择“全部解压缩”。
@@ -28,10 +28,13 @@ SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年
 
 上传SLDPRT后可以直接输入“厚度改成12毫米，两个孔改成直径10毫米，其余保持”。程序先读取驱动参数，修改工作副本并保存重开验证。
 
+参见[同类项目对比与后续优先级](release_tools/CAPABILITY_ROADMAP.md)。
+
 ## 版本历史
 
 | 版本 | 主要更新 |
 | --- | --- |
+| [0.12.0-rc2](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.12.0-rc2) | 原生孔阵列与镜像 |
 | [0.11.0-rc3](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.11.0-rc3) | 标准孔与真实内外螺纹 |
 | [0.10.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.10.0-rc1) | 自然语言圆角倒角 |
 | [0.9.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.9.0-rc1) | 自然语言局部改模 |

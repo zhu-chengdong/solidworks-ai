@@ -25,10 +25,11 @@ def catalog(doc):
     def visit(feature,depth=0,managed=False):
         if depth>16:raise RuntimeError('Feature nesting exceeds inspection limit')
         name=str(get(feature,'Name'));kind=str(get(feature,'GetTypeName2'))
-        managed=managed or kind in {'HoleWzd','SweepThread'}
+        managed_types={'HoleWzd','SweepThread','LPattern','CirPattern','MirrorPattern'}
+        managed=managed or kind in managed_types
         owner=get(feature,'GetOwnerFeature',default=None)
         consumers=[owner] if owner is not None else list(get(feature,'GetChildren',default=[]) or [])
-        managed=managed or any(str(get(f,'GetTypeName2')) in {'HoleWzd','SweepThread'} for f in consumers)
+        managed=managed or any(str(get(f,'GetTypeName2')) in managed_types for f in consumers)
         if name in features:return
         features[name]=kind
         display=get(feature,'GetFirstDisplayDimension',default=None)

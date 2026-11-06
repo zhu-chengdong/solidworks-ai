@@ -179,8 +179,8 @@ def _make_part(app,part,path,cad_inputs):
             raise RuntimeError('Native part extent differs from the declared recipe coordinates')
     geometry=geometry_evidence(a,doc,part.geometry()) if part.shape in {'plate','l_bracket','profile'} else None
     if geometry and not geometry['passed']:raise RuntimeError('Native outline or hole position verification failed')
-    base_geometry=geometry;treatments=[];standard_holes=[];metric_threads=[]
-    if part.edge_treatments or part.standard_holes or part.metric_threads:
+    base_geometry=geometry;treatments=[];standard_holes=[];metric_threads=[];patterns=[]
+    if part.edge_treatments or part.standard_holes or part.metric_threads or part.hole_patterns:
         if dimension_edits is None:
             from .dimensions import catalog
             dimension_edits={'before':catalog(doc),'changes':[],'purpose':'preserve driving dimensions during finishing'}
@@ -190,6 +190,8 @@ def _make_part(app,part,path,cad_inputs):
         from .threads import apply as apply_metric_threads
         standard_holes=apply_standard_holes(app,doc,part.standard_holes)
         metric_threads=apply_metric_threads(app,doc,part.metric_threads)
+        from .patterns import apply as apply_patterns
+        patterns=apply_patterns(app,doc,part.hole_patterns,standard_holes)
         bodies=a._get_solid_bodies(doc)
         if len(bodies)!=1:raise RuntimeError('Edge treatment changed solid body count')
         volume=sum(a._body_mass_props(b,'mm')['volume_exact'] for b in bodies)
@@ -206,7 +208,7 @@ def _make_part(app,part,path,cad_inputs):
     step=path.with_suffix('.step');export=export_full_step(app,doc,step)
     return doc,{'id':part.id,'shape':part.shape,'path':str(path),'step':str(step),'body_count':len(bodies),
         'volume_mm3':volume,'expected_volume_mm3':expected,'sketch_quality':quality,'step_export':export,
-        'parameters':part.model_dump(),'imported':imported,'exact_bounds':bounds,'geometry':geometry,'base_geometry':base_geometry,'dimension_edits':dimension_edits,'edge_treatments':treatments,'standard_holes':standard_holes,'metric_threads':metric_threads}
+        'parameters':part.model_dump(),'imported':imported,'exact_bounds':bounds,'geometry':geometry,'base_geometry':base_geometry,'dimension_edits':dimension_edits,'edge_treatments':treatments,'standard_holes':standard_holes,'metric_threads':metric_threads,'hole_patterns':patterns}
 
 
 def _assembly_snapshot(doc,spec,record):
@@ -273,10 +275,14 @@ def _verify_treatments(doc,record):
     from .finishing import EdgeTreatment,read
     from .standard_holes import StandardHole,read as read_hole
     from .threads import MetricThread,read as read_thread
+    from .patterns import read as read_pattern,cylinders as pattern_cylinders
     rows=[read(doc,r['native']['feature'],EdgeTreatment.model_validate(r['operation'])) for r in record.get('edge_treatments',[])]
     holes=[read_hole(doc,r['native']['feature'],StandardHole.model_validate(r['operation'])) for r in record.get('standard_holes',[])]
     threads=[read_thread(doc,r['native']['feature'],MetricThread.model_validate(r['operation'])) for r in record.get('metric_threads',[])]
-    return {'passed':all(r['passed'] for r in rows+holes+threads),'features':rows,'standard_holes':holes,'metric_threads':threads}
+    pattern_records=record.get('hole_patterns',[])
+    actual_cylinders=pattern_cylinders(doc) if pattern_records else None
+    patterns=[read_pattern(doc,r,actual_cylinders) for r in pattern_records]
+    return {'passed':all(r['passed'] for r in rows+holes+threads+patterns),'features':rows,'standard_holes':holes,'metric_threads':threads,'hole_patterns':patterns}
 
 
 def execute_stage(app,spec_path,output_dir,stage,allowed_root):
@@ -361,10 +367,11 @@ def execute_stage(app,spec_path,output_dir,stage,allowed_root):
             if spec.document=='assembly':record['verification']=_assembly_snapshot(doc,spec,record)
             else:
                 from scripts.sw_sketch_quality import inspect_model_sketches
-                part=spec.parts[0];bodies=a._get_solid_bodies(doc);quality=inspect_model_sketches(doc)
+                part=spec.parts[0];bodies=a._get_solid_bodies(doc)
                 from .feature_quality import inspect as inspect_feature_quality
                 saved_part=record['parts'][part.id]
                 if saved_part.get('standard_holes') or saved_part.get('metric_threads'):quality=inspect_feature_quality(doc,saved_part.get('standard_holes',[]),saved_part.get('metric_threads',[]))
+                else:quality=inspect_model_sketches(doc)
                 volume=sum(a._body_mass_props(b,'mm')['volume_exact'] for b in bodies);expected=part.expected_volume()
                 record['verification']={'passed':bool(bodies) and volume>0 and (expected is None or math.isclose(volume,expected,rel_tol=1e-6,abs_tol=1e-3)) and (part.shape=='existing' or quality['status'] in {'pass','native_standard_profiles_verified'}),
                     'body_count':len(bodies),'volume_mm3':volume,'sketch_quality':quality,'exact_bounds':_exact_bounds(bodies)}
@@ -379,8 +386,9 @@ def execute_stage(app,spec_path,output_dir,stage,allowed_root):
                 record['verification']['edge_treatments']=treatments
                 record['verification']['standard_holes']=treatments['standard_holes']
                 record['verification']['metric_threads']=treatments['metric_threads']
+                record['verification']['hole_patterns']=treatments['hole_patterns']
                 record['verification']['passed']=record['verification']['passed'] and treatments['passed']
-                if treatments['features'] or treatments['standard_holes'] or treatments['metric_threads']:
+                if treatments['features'] or treatments['standard_holes'] or treatments['metric_threads'] or treatments['hole_patterns']:
                     saved=record['parts'][part.id]
                     persistent=len(bodies)==saved['body_count'] and math.isclose(volume,saved['volume_mm3'],rel_tol=1e-8,abs_tol=1e-3)
                     record['verification']['edge_treatment_geometry_persisted']=persistent
@@ -413,15 +421,19 @@ def execute_stage(app,spec_path,output_dir,stage,allowed_root):
                 from .threads import MetricThread,measure_geometry
                 thread_specs=list(spec.parts[0].metric_threads)
                 thread_specs += [MetricThread(size=h.size,internal=True,point_mm=h.point_mm,length_mm=h.thread_depth_mm) for h in spec.parts[0].standard_holes if h.thread_representation=='modeled']
-                if thread_specs:
+                pattern_records=record['parts'][spec.parts[0].id].get('hole_patterns',[])
+                if thread_specs or pattern_records:
                     from .validation import verify_assembly_step
                     def validate_threads(imported):
                         if int(_get(imported,'GetType'))!=1:raise RuntimeError('Part STEP verification needs a multibody part')
                         faces=[f for b in _get(imported,'GetBodies2',0,False) or [] for f in _get(b,'GetFaces') or []]
                         rows=[{'requested':t.model_dump(),'actual':measure_geometry(faces,t)} for t in thread_specs]
-                        return {'passed':all(r['actual']['passed'] for r in rows),'threads':rows,'source':'actual reimported STEP B-Rep'}
+                        from .patterns import geometry as pattern_geometry,cylinders as pattern_cylinders
+                        actual_cylinders=pattern_cylinders(imported) if pattern_records else None
+                        patterns=[pattern_geometry(imported,r,actual_cylinders) for r in pattern_records]
+                        return {'passed':all(r['actual']['passed'] for r in rows) and all(r['passed'] for r in patterns),'threads':rows,'patterns':patterns,'source':'actual reimported STEP B-Rep'}
                     snapshot={**record['verification'],'mass_properties':{'volume_mm3':record['verification']['volume_mm3']}}
-                    record['verification']['step_reimport']=verify_assembly_step(app,doc,step,snapshot,record['verification']['body_count'],geometry_validator=validate_threads)
+                    record['verification']['step_reimport']=verify_assembly_step(app,doc,step,snapshot,record['verification']['body_count'],geometry_validator=validate_threads,geometry_label='feature_geometry' if pattern_records else 'thread_geometry')
                     doc=open_document(app,str(path),silent=True,raise_on_error=True)
             else:
                 old=int(_get(app,'GetUserPreferenceIntegerValue',75));old_geometry=int(_get(app,'GetUserPreferenceIntegerValue',142))
