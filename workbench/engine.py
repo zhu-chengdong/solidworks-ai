@@ -111,6 +111,10 @@ class JobStopped(UserFacingError):
     pass
 
 
+class ModelOutputLimit(UserFacingError):
+    pass
+
+
 def underlying_user_error(exc):
     if isinstance(exc, UserFacingError):
         return exc
@@ -221,6 +225,9 @@ async def model_session(profile):
                 # The SDK rejects terminal failures before on_llm_end runs.
                 if status in {'failed','incomplete'} and usage is not None:
                     job.add_usage(usage.input_tokens,usage.output_tokens)
+                if status=='incomplete' and (getattr(getattr(response,'incomplete_details',None),'reason',None)=='max_output_tokens'
+                        or (usage is not None and limit is not None and usage.output_tokens>=limit)):
+                    raise ModelOutputLimit('模型达到输出上限而被截断。已保留实际用量；本次响应不继续执行。')
                 return response
             client.responses.create=observed_create
         elif job is not None and profile['api_style']=='chat_completions':
@@ -247,7 +254,8 @@ async def model_session(profile):
                     reasoning_tokens=getattr(getattr(usage,'completion_tokens_details',None),'reasoning_tokens',None))
                 if status!='completed':
                     if usage is not None:job.add_usage(usage.prompt_tokens,usage.completion_tokens)
-                    raise UserFacingError('模型达到输出上限而被截断。已保留实际用量；本次响应不继续执行。' if finish=='length' else '模型响应未完成，已停止后续操作。')
+                    if finish=='length':raise ModelOutputLimit('模型达到输出上限而被截断。已保留实际用量；本次响应不继续执行。')
+                    raise UserFacingError('模型响应未完成，已停止后续操作。')
                 return response
             client.chat.completions.create=observed_chat
         cls = OpenAIResponsesModel if profile["api_style"] == "responses" else OpenAIChatCompletionsModel
@@ -274,8 +282,8 @@ async def mcp_session():
 def model_settings(profile, role, output_budget=None):
     budget = output_budget or (4096 if role == "planner" else 1800)
     requested=profile.get('reasoning_effort','auto')
-    if profile['provider']=='deepseek' and requested=='max':budget=131072
-    if (profile['provider']=='openai' and requested=='max'
+    if profile['provider']=='deepseek' and requested=='max' and output_budget is None:budget=131072
+    if (profile['provider']=='openai' and requested=='max' and output_budget is None
             and profile['model'] in {'gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra'}):budget=128000
     settings = ModelSettings(max_tokens=budget)
     if profile.get('transport') == 'magpie':
@@ -333,7 +341,7 @@ class WorkbenchEngine:
         if not is_openai:
             instructions += "仅输出JSON，不要Markdown代码块。JSON必须符合以下Schema：" + json.dumps(output_type.model_json_schema(), ensure_ascii=False)
         observed_profile={**profile,'_job':job,'_role':'review' if output_type is Review else 'planner'}
-        options=model_settings(profile, "planner",16384 if output_type is EngineeringPlan else None)
+        options=model_settings(profile, "planner",profile.get('token_budget',16384))
         if profile['provider']=='deepseek' and profile['api_style']=='chat_completions':
             options.extra_args={**(options.extra_args or {}),'response_format':{'type':'json_object'}}
         async with self.model_factory(observed_profile) as model:
@@ -473,21 +481,35 @@ class WorkbenchEngine:
                        if job.reference_mode == "approximate" else "当前模式为按尺寸建模，不允许从照片猜测未标注的尺寸。"))
                 plan = await self.structured(planner_profile, image_input(job, planning), ReferencePlan, job)
             else:
-                if not job.cad_inputs and not job.previous_context and not job.drawing_inputs:
+                compact_new = not job.cad_inputs and not job.previous_context and not job.drawing_inputs
+                if compact_new:
                     from .planning_contract import new_task_prompt
                     planning=new_task_prompt(job.requests,context)
+                planning_profile=dict(planner_profile)
                 for attempt in range(2):
                     try:
-                        plan = await self.structured(planner_profile, planning, EngineeringPlan, job)
+                        plan = await self.structured(planning_profile, planning, EngineeringPlan, job)
                         break
+                    except ModelOutputLimit:
+                        if planning_profile.get('transport')=='magpie':raise
+                        if attempt:raise ModelOutputLimit('规划在两次预算内仍未生成完整方案，尚未写入CAD。可在设置调整规划与复核响应预算，或拆分任务。') from None
+                        current_budget=planning_profile.get('token_budget',16384)
+                        next_budget=min(current_budget*2,128000)
+                        if next_budget<=current_budget:raise
+                        job.event('planning_budget_retry','规划响应达到上限，保持推理强度并调整一次响应预算',previous_budget=current_budget,next_budget=next_budget,reasoning_effort=planning_profile.get('reasoning_effort','auto'))
+                        planning_profile={**planning_profile,'token_budget':next_budget}
+                        planning+='\n上一响应在输出预算内未给出完整方案。请依据原始需求直接输出完整JSON参数和必要问题；低层草图、配合符号、质量与几何校验由原生编译器完成，不要反复推演或输出额外解释。关键设计信息不全则返回needs_clarification=true和design=null。'
                     except ModelBehaviorError as exc:
                         if 'max_output_tokens' in str(exc):
                             raise UserFacingError('完整设计方案达到模型输出上限而被截断，尚未开始建模。请保留本任务记录供维护者调整规划容量。') from None
-                        if attempt:raise
-                        job.event('planning_repair','方案结构未通过校验，正在重新核对关键参数')
+                        from .planning_repair import repair_context
+                        feedback,previous=repair_context(exc,EngineeringPlan,include_previous=not compact_new)
+                        if attempt:
+                            job.event('planning_rejected','修正方案仍未通过结构校验，已停止建模',validation_feedback=feedback)
+                            raise
+                        job.event('planning_repair','方案结构未通过校验，正在重新核对关键参数',validation_feedback=feedback,previous_json_omitted=compact_new)
                         planning += '\n上一方案未通过结构校验。请严格检查必填尺寸、零件/实例id、一个固定基件和配合图。缺信息时返回needs_clarification=true、design=null，不要补默认安装座。'
-                        planning += '\n具体校验错误：'+getattr(exc,'validation_feedback',str(exc))[:12000]
-                        previous=getattr(exc,'invalid_output',None)
+                        planning += '\n具体校验错误：'+feedback
                         if previous:planning += '\n上次返回的最终JSON（未执行，请依据错误修正并重新返回完整JSON）：\n'+previous
             engineering=isinstance(plan,EngineeringPlan) and plan.design is not None
             job.set_plan(plan.model_dump())
@@ -649,7 +671,10 @@ class WorkbenchEngine:
                     +'；params.stage=0。应用会分阶段完成全部零件、真实配合、重开核验、干涉、STEP/BOM/预览与依赖ZIP。'
                     '不能改写规格、跳过阶段或调用其他创建/修改工具。收到complete=true后只需简述实际核验与文件，允许只读工具补充检查。'
                     '该接口已包含原生尺寸、体积、预览和装配状态读取，不能再按前面的通用流程重复创建或另行保存。'
-                    'verification.passed=false不能称为通过；allow_motion不等于已验证运动。')
+                    'verification.passed=false不能称为通过；allow_motion不等于已验证运动。'
+                    '材料按实际组件的physical_properties回读：explicit_custom_density使用明确标签和实际密度，不要求虚构材料库名。'
+                    '装配总质量由实际组件材料与原生总质量核对，不要求装配体本身再赋统一材料。'
+                    '工程用途人工确认提示必须保留，静态CAD核验通过不等于承载、制造或运动认证。')
             async with self.model_factory({**executor_profile,'_job':job,'_role':'executor'}) as model:
                 executor = Agent(name="SolidWorks执行", model=model, instructions=instructions,
                     tools=tools, model_settings=model_settings(executor_profile, "executor"))

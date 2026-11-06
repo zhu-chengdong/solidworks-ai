@@ -28,9 +28,18 @@ def catalog(doc):
         name=str(get(feature,'Name'));kind,_=feature_type(feature)
         managed_types={'HoleWzd','SweepThread','LPattern','CirPattern','MirrorPattern'}
         managed=managed or kind in managed_types
-        owner=get(feature,'GetOwnerFeature',default=None)
-        consumers=[owner] if owner is not None else list(get(feature,'GetChildren',default=[]) or [])
-        managed=managed or any(str(get(f,'GetTypeName2')) in managed_types for f in consumers)
+        # GetChildren includes downstream dependent features. A stock extrusion
+        # is not owned by a Hole Wizard merely because the hole depends on it.
+        # Ownership/consumption is relevant only to the actual managed sketches.
+        if kind in {'ProfileFeature','3DProfileFeature'}:
+            owner=get(feature,'GetOwnerFeature',default=None)
+            consumers=[owner] if owner is not None else list(get(feature,'GetChildren',default=[]) or [])
+            managed=managed or any(str(get(f,'GetTypeName2')) in managed_types for f in consumers)
+        else:
+            # Keep conservative protection for thread carriers and pattern
+            # dependencies until their coupled edits have separate acceptance.
+            downstream=list(get(feature,'GetChildren',default=[]) or [])
+            managed=managed or any(str(get(f,'GetTypeName2')) in managed_types-{'HoleWzd'} for f in downstream)
         if name in features:return
         features[name]=kind
         display=get(feature,'GetFirstDisplayDimension',default=None)

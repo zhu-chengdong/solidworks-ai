@@ -4,7 +4,7 @@ from unittest.mock import patch
 import httpx2
 from openai import AsyncOpenAI
 from agents.exceptions import ModelBehaviorError
-from workbench.engine import WorkbenchEngine,EngineeringPlan,Review
+from workbench.engine import WorkbenchEngine,EngineeringPlan,Review,ModelOutputLimit
 from workbench.jobs import Job
 from workbench_support import ScriptedAPI,configured_store,FakeMCP
 
@@ -36,13 +36,13 @@ class ModelObservationTests(unittest.IsolatedAsyncioTestCase):
             return AsyncOpenAI(**kwargs,http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(api.handle)))
         with patch('workbench.engine.AsyncOpenAI',side_effect=client):
             try:await WorkbenchEngine(store).structured(profile,'检查方案',EngineeringPlan,job)
-            except ModelBehaviorError as exc:return job,exc
+            except (ModelBehaviorError,ModelOutputLimit) as exc:return job,exc
         return job,None
 
     async def test_incomplete_provider_response_records_usage_before_sdk_rejects(self):
         with tempfile.TemporaryDirectory() as folder:
             job,error=await self.run_planning(TruncatedAPI(),folder)
-            self.assertIsInstance(error,ModelBehaviorError)
+            self.assertIsInstance(error,ModelOutputLimit)
             self.assertEqual(job.usage,{'input_tokens':20,'output_tokens':20})
             event=next(e for e in job.events if e['kind']=='model_response')
             self.assertEqual(event['incomplete_reason'],'max_output_tokens')
@@ -75,7 +75,7 @@ class ModelObservationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual([body['model'] for body in api.requests],['gpt-6-astra','gpt-6.1-terra','gpt-6.1-terra','gpt-6-astra'])
             for body in api.requests:
                 self.assertEqual(body['reasoning']['effort'],'max')
-                self.assertEqual(body['max_output_tokens'],128000)
+                self.assertEqual(body['max_output_tokens'],128000 if body.get('tools') else 16384)
                 self.assertFalse(body['store'])
                 if body.get('tools'):self.assertFalse(body['parallel_tool_calls'])
                 else:self.assertNotEqual(body.get('parallel_tool_calls'),True)
@@ -83,7 +83,7 @@ class ModelObservationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(events),4);self.assertEqual(events[-1]['role'],'review')
             self.assertEqual(job.usage,{'input_tokens':80,'output_tokens':80})
             for event in events:
-                self.assertEqual(event['reasoning_effort'],'max');self.assertEqual(event['max_output_tokens'],128000)
+                self.assertEqual(event['reasoning_effort'],'max');self.assertEqual(event['max_output_tokens'],128000 if event['role']=='executor' else 16384)
                 self.assertEqual(event['input_cached_tokens'],7);self.assertEqual(event['reasoning_tokens'],9)
                 self.assertEqual(event['usage_details']['input_tokens_details']['cached_tokens'],7)
                 self.assertGreaterEqual(event['api_elapsed_seconds'],0)
@@ -97,9 +97,9 @@ class ModelObservationTests(unittest.IsolatedAsyncioTestCase):
             store=max_store(folder);job=Job('复杂装配',Path(folder)/'jobs');api=TruncatedAPI()
             def client(**kwargs):return AsyncOpenAI(**kwargs,http_client=httpx2.AsyncClient(transport=httpx2.MockTransport(api.handle)))
             with patch('workbench.engine.AsyncOpenAI',side_effect=client):
-                with self.assertRaises(ModelBehaviorError):
+                with self.assertRaises(ModelOutputLimit):
                     await WorkbenchEngine(store).structured(store.role('planner'),'规划',EngineeringPlan,job)
             self.assertEqual(job.usage,{'input_tokens':20,'output_tokens':20})
             event=next(e for e in job.events if e['kind']=='model_response')
-            self.assertEqual(event['reasoning_effort'],'max');self.assertEqual(event['max_output_tokens'],128000)
+            self.assertEqual(event['reasoning_effort'],'max');self.assertEqual(event['max_output_tokens'],16384)
             self.assertEqual(event['status'],'incomplete');self.assertEqual(len(api.requests),1)

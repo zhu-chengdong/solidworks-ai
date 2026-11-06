@@ -170,7 +170,7 @@ function openSettings() {
     $(role+'-effort').value=draft.roles[role].reasoning_effort||'auto';
     updateEffortOptions(role);
   });
-  $('max-turns').value=draft.max_turns;settingsNotice('');$('connection-results').replaceChildren();$('settings-dialog').showModal();
+  $('max-turns').value=draft.max_turns;$('planner-token-budget').value=draft.planner_token_budget??16384;settingsNotice('');$('connection-results').replaceChildren();$('settings-dialog').showModal();
   $('planner-vision').checked=!!draft.roles.planner.vision;
 }
 function updateEffortOptions(role) {
@@ -184,6 +184,7 @@ async function saveSettings() {
   ['planner','executor'].forEach(role=>{const effort=$(role+'-effort').value;if(effort!=='auto')draft.roles[role].reasoning_effort=effort;});
   draft.roles.planner.vision=$('planner-vision').checked;
   draft.max_turns=Number($('max-turns').value);
+  draft.planner_token_budget=Number($('planner-token-budget').value);
   const keys=Object.fromEntries(Object.entries(pendingKeys).filter(([,value])=>value.trim()));
   $('settings-save').disabled=true;
   try {

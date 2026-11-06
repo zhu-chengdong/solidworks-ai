@@ -4,6 +4,18 @@ English | [简体中文](CHANGELOG.zh-CN.md)
 
 Published tags, their original notes and downloads remain in [GitHub Releases](https://github.com/zhu-chengdong/solidworks-ai/releases). Unpublished local candidates are not listed as public releases. All current releases are Windows x64 prereleases; native CAD acceptance targets SOLIDWORKS 2024.
 
+## 0.14.0-rc11
+
+- Adds Part.material with actual installed-library grades for6061/6061-T6,316 sheet/annealed bar, plain carbon steel and ABS, without density-only substitutions. Explicit custom density requires a label and kg/m3 and currently a single-configuration part.
+- Verifies native maximum-accuracy mass/volume and material identity after save/reopen. Assembly BOM counts actual resolved instances and compares their known masses with the native total. Unknown engineering mass stays unknown; native defaults remain separate.
+- Makes generic read-only mass queries use actual component materials and explicit custom density consistently with BOM. Rejects density-changing query arguments. Nested/unresolved components or differing referenced configurations remain unqualified.
+- Repairs stock dimensions locked solely by downstream Hole Wizard dependencies while protecting standard features, consumed profiles, thread carriers and patterns. A separate-copy6061 plate edit verifies holes, other dimensions, mass and source hashes.
+- Keeps Sol MAX planning/review and Terra MAX execution, separating reasoning effort from response capacity. Planning/review start at16384 tokens, configurable from1024 to128000. Ordinary planning permits one bounded capacity/structure correction; the retry capacity is at most twice the initial value, capped at128000. Execution MAX capacity and the free pool independent verified limits remain intact. A measured128000-token all-reasoning/no-plan failure exposed the old MAX budget override; this release fixes it.
+- Fresh-task structural repair retains original intent plus bounded redacted field errors, without repeating the invalid draft. Source/revision contexts remain intact. Logs concrete failures/actual usage and stops before CAD if the single correction fails.
+- Task failures retain exception types and code locations without exception text, arguments or local variables.
+- A four-component6061 M12 plate,316 shaft and two shared resin blocks exercises nine real mates, zero interference,1/1/2 BOM, native save/reopen, actual four-body STEP reimport, four views, packaged natural-language planning/execution/review, independent mass query and settings-budget roundtrips.
+- Preserves engineering-intent review. Automated CAD/material/mate/delivery qualification does not certify manufacturing, loads or motion.2024 is tested;2026, manufacturing drawings, mechanisms and configurations remain separate work. STEP qualification is geometry-only.
+
 ## 0.13.0-rc7
 
 - Adds native editable stadium slots and simple polygon pockets through natural-language plans, on the highest local +Z planar face. Supports true Through All and flat-bottom blind cuts; slots use actual lines and circular arcs at arbitrary in-plane angles.

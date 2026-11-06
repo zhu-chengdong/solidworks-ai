@@ -150,7 +150,24 @@ def load_server():
     # Recovery uses window messages/keyboard events in upstream. Do not expose it.
     engine.mcp.remove_tool("solidworks_recover")
 
-    from pydantic import BaseModel, ConfigDict
+    from pydantic import BaseModel, ConfigDict, Field
+
+    engine.mcp.remove_tool('solidworks_mass_properties')
+    class SolidWorksReadOnlyMassInput(engine.SolidWorksMassPropertiesInput):
+        density_kg_m3: float | None = Field(default=None,gt=0,le=30000,
+            description='Deprecated for this read-only query: omit this field. Set explicit density through Part.material before measuring. A numeric value is rejected without changing the document.')
+    globals()['SolidWorksReadOnlyMassInput'] = SolidWorksReadOnlyMassInput
+
+    @engine.mcp.tool(name='solidworks_mass_properties', annotations={'readOnlyHint':True})
+    def mass_properties(params: SolidWorksReadOnlyMassInput) -> str:
+        """Read actual maximum-accuracy mass/volume and material provenance. Flat assemblies use resolved instance materials; unknown mass remains unknown. Density overrides are rejected because this query is read-only."""
+        def operation():
+            from engineering.physical_query import report
+            _app, model = engine._active_model_required()
+            result = report(model, params.density_kg_m3)
+            result['document'] = engine._model_summary(model)
+            return result
+        return run_locked(operation, params.response_format)
 
     class ReferenceBuildInput(BaseModel):
         model_config = ConfigDict(extra="forbid")

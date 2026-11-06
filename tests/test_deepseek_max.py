@@ -49,12 +49,12 @@ class DeepSeekMaxTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(job.phase,'completed');self.assertEqual(len(api.requests),3)
             for body in api.requests:
                 self.assertEqual(body['reasoning_effort'],'max');self.assertEqual(body['thinking'],{'type':'enabled'})
-                self.assertEqual(body['max_tokens'],131072)
+                self.assertEqual(body['max_tokens'],131072 if body.get('tools') else 16384)
                 self.assertEqual(body.get('response_format'),None if body.get('tools') else {'type':'json_object'})
             replay=next(m for m in api.requests[-1]['messages'] if m.get('role')=='assistant' and m.get('tool_calls'))
             self.assertEqual(replay['reasoning_content'],'mock-private-reasoning')
             events=[e for e in job.events if e['kind']=='model_response']
-            self.assertEqual(len(events),3);self.assertTrue(all(e['reasoning_effort']=='max' and e['max_output_tokens']==131072 for e in events))
+            self.assertEqual(len(events),3);self.assertTrue(all(e['reasoning_effort']=='max' for e in events));self.assertEqual([e['max_output_tokens'] for e in events],[16384,131072,131072])
             self.assertEqual(job.usage,{'input_tokens':60,'output_tokens':90})
             self.assertNotIn('mock-private-reasoning',json.dumps(job.public()))
             self.assertNotIn('sk-deepseek-test',json.dumps(job.public()))

@@ -138,7 +138,7 @@ class PreviewRepairLoopTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(error);self.assertEqual(len(session.calls),1);self.assertEqual(api.reviews,2)
             self.assertEqual(job.review_status['state'],'passed');self.assertIn('再次复核通过',summary)
             self.assertEqual([b['model'] for b in api.requests],['gpt-6.1-sol','gpt-6.1-terra','gpt-6.1-terra','gpt-6.1-sol'])
-            self.assertTrue(all(b['reasoning']['effort']=='max' and b['max_output_tokens']==128000 for b in api.requests))
+            self.assertTrue(all(b['reasoning']['effort']=='max' for b in api.requests));self.assertEqual([b['max_output_tokens'] for b in api.requests],[16384,128000,128000,16384])
             self.assertEqual(job.usage,{'input_tokens':80,'output_tokens':80})
             self.assertEqual(len(list((job.output_dir/'reviews').glob('round-*.json'))),2)
             self.assertTrue(all('round-1/' in a['name'] for a in job.artifacts if a['preview']))

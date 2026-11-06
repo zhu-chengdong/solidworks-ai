@@ -9,7 +9,7 @@ from workbench_support import configured_store,FakeMCP,ScriptedAPI
 from test_deepseek_max import MaxChatAPI
 
 class HighestChatAPI(MaxChatAPI):
-    def __init__(self):super().__init__();self.response_api=ScriptedAPI()
+    def __init__(self,planning_budgets=(16384,)):super().__init__();self.response_api=ScriptedAPI();self.planning_budgets=planning_budgets
     def handle(self,request):
         body=json.loads(request.content)
         if request.url.path.endswith('/responses'):
@@ -17,7 +17,9 @@ class HighestChatAPI(MaxChatAPI):
                 return httpx2.Response(400,json={'error':{'message':'Responses must preserve MAX and capacity'}})
             self.requests.append(body)
             return self.response_api.handle(request)
-        if 'max_tokens' in body or body.get('max_completion_tokens')!=128000 or body.get('reasoning_effort')!='xhigh':
+        index=sum('max_completion_tokens' in r for r in self.requests)
+        expected=self.planning_budgets[min(index,len(self.planning_budgets)-1)]
+        if 'max_tokens' in body or body.get('max_completion_tokens')!=expected or body.get('reasoning_effort')!='xhigh':
             return httpx2.Response(400,json={'error':{'message':'GPT-6 Chat requires max_completion_tokens and highest supported xhigh'}})
         response=super().handle(request);data=response.json();data['model']=body['model']
         return httpx2.Response(200,json=data)
@@ -37,7 +39,7 @@ class OpenAIHighestChat(unittest.IsolatedAsyncioTestCase):
             responses=[e for e in job.events if e['kind']=='model_response']
             self.assertEqual(len(responses),3)
             self.assertEqual([e['reasoning_effort'] for e in responses],['xhigh','max','max'])
-            self.assertTrue(all(e['max_output_tokens']==128000 for e in responses))
+            self.assertEqual([e['max_output_tokens'] for e in responses],[16384,128000,128000])
             self.assertTrue(any(e['kind']=='model_transport' and e['api_style']=='responses' for e in job.events))
             self.assertFalse(any(name.startswith('solidworks_create') for name,_ in mcp.calls))
             self.assertNotIn('mock-private-reasoning',json.dumps(job.public()))

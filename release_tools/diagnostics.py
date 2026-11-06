@@ -65,6 +65,14 @@ async def diagnose():
     from engineering.feature_quality import classify as classify_feature_quality
     from engineering.patterns import HolePattern,apply as apply_patterns,read as read_pattern,geometry as pattern_geometry
     from engineering.pockets import PlanarCut,apply as apply_cuts,read as read_cut,geometry as cut_geometry
+    from engineering.materials import MaterialSpec,apply as apply_material,verify as verify_material,measure,native_values
+    from engineering.bom import summarize,rows as bom_rows
+    from engineering.physical_query import report as physical_query
+    from workbench.planning_repair import repair_context
+    if not callable(repair_context):raise RuntimeError('Packaged planning repair feedback missing')
+    if not callable(physical_query):raise RuntimeError('Packaged material-aware mass query missing')
+    MaterialSpec(grade='aluminium_6061')
+    if not all(callable(f) for f in (apply_material,verify_material,measure,native_values,summarize,bom_rows)):raise RuntimeError('Packaged native material/BOM adapter missing')
     PlanarCut(kind='slot',z_mm=12,center_mm=[0,0],length_mm=30,width_mm=8)
     if not all(callable(f) for f in (apply_cuts,read_cut,cut_geometry)):raise RuntimeError('Packaged native planar cut adapter missing')
     HolePattern(kind='linear',seed_hole_index=0,spacing_mm=20)
@@ -100,6 +108,6 @@ async def diagnose():
         vault.remove('diagnostic', probe_url)
     return {"environment": installation_status(), "tools": len(tools.tools), "health": health,
             "native_modules_imported": True, "reference_compiler_imported": reference_ready,"native_loft_imported":loft_ready,"engineering_imported":engineering_ready,
-            "model_called": False, "cad_connected": False,"planar_cuts_imported":True,"hole_patterns_imported":True,"standard_holes_and_threads_imported":True,"local_dimension_adapter_imported":True,"drawing_parser_imported":drawing_ready,"advanced_drawing_imported":advanced_ready,"analytic_drawing_imported":True,"pdf_page_rendered":pdf_ready,
+            "model_called": False, "cad_connected": False,"materials_and_bom_imported":True,"planar_cuts_imported":True,"hole_patterns_imported":True,"standard_holes_and_threads_imported":True,"local_dimension_adapter_imported":True,"drawing_parser_imported":drawing_ready,"advanced_drawing_imported":advanced_ready,"analytic_drawing_imported":True,"pdf_page_rendered":pdf_ready,
             "optional_pdf_review": False, "vault_probe_before":vault_before,"vault_probe_after":credential_probe(),
             "credential_dummy_roundtrip_and_cleanup": vault_roundtrip}

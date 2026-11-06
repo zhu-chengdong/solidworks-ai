@@ -148,6 +148,10 @@ def _make_part(app,part,path,cad_inputs):
             feature=extrude_cut(doc,ref,(part.height_mm-part.wall_mm)/1000,direction=False)
             if feature is None:raise RuntimeError('Enclosure cavity cut failed')
             feature.Name='InteriorCavity';doc.ClearSelection2(True);plane.Select2(False,0);_get(doc,'BlankRefGeom')
+    from .materials import apply as apply_material,refresh as refresh_material
+    # MaterialFolder renames are intentional metadata. Apply and verify them
+    # before taking the strict driving-dimension/feature-identity baseline.
+    physical=apply_material(app,doc,part.material)
     from .dimensions import apply as apply_dimensions
     dimension_edits=apply_dimensions(doc,part.dimension_changes) if part.dimension_changes else None
     if not _get(doc,'ForceRebuild3',False):raise RuntimeError('Native part rebuild failed')
@@ -205,12 +209,13 @@ def _make_part(app,part,path,cad_inputs):
         if dimension_edits:
             from .dimensions import catalog
             dimension_edits['after_operations']=catalog(doc)
+    physical=refresh_material(doc,physical)
     doc.ClearSelection2(True)
     if not save_document(doc,str(path)):raise RuntimeError('Native part save failed')
     step=path.with_suffix('.step');export=export_full_step(app,doc,step)
     return doc,{'id':part.id,'shape':part.shape,'path':str(path),'step':str(step),'body_count':len(bodies),
         'volume_mm3':volume,'expected_volume_mm3':expected,'sketch_quality':quality,'step_export':export,
-        'parameters':part.model_dump(),'imported':imported,'exact_bounds':bounds,'geometry':geometry,'base_geometry':base_geometry,'dimension_edits':dimension_edits,'edge_treatments':treatments,'standard_holes':standard_holes,'metric_threads':metric_threads,'hole_patterns':patterns,'planar_cuts':cuts}
+        'parameters':part.model_dump(),'imported':imported,'exact_bounds':bounds,'geometry':geometry,'base_geometry':base_geometry,'dimension_edits':dimension_edits,'edge_treatments':treatments,'standard_holes':standard_holes,'metric_threads':metric_threads,'hole_patterns':patterns,'planar_cuts':cuts,'physical_properties':physical}
 
 
 def _assembly_snapshot(doc,spec,record):
@@ -242,8 +247,13 @@ def _assembly_snapshot(doc,spec,record):
             passed=passed and dimension_readback['passed']
         treatment_readback=_verify_treatments(part_model,record['parts'][instance.part_id])
         passed=passed and treatment_readback['passed']
+        from .materials import verify as verify_material
+        material_readback=verify_material(part_model,record['parts'][instance.part_id]['physical_properties'])
+        referenced=str(_get(component,'ReferencedConfiguration'))
+        if referenced!=material_readback['actual']['configuration']:raise RuntimeError('Referenced material configuration differs from the measured active configuration')
+        passed=passed and material_readback['passed']
         bounds=_exact_bounds(bodies,transform);assembly_bounds.append(bounds)
-        rows.append({'id':instance.id,'name':name,'path':str(_get(component,'GetPathName')),
+        rows.append({'id':instance.id,'part_id':instance.part_id,'physical_properties':material_readback['actual'],'name':name,'path':str(_get(component,'GetPathName')),
             'position_mm':[v*1000 for v in transform[9:12]],'rotation_matrix':transform[:9],
             'expected_position_mm':instance.position_mm,'pose_verified':pose_ok,'fixed':fixed,
             'constrained_status':constrained,'constraint_verified':constraint_ok,'source_verified':source_ok,
@@ -263,13 +273,18 @@ def _assembly_snapshot(doc,spec,record):
     maximum=[max(b['max'][i] for b in assembly_bounds) for i in range(3)]
     mass=collect_mass_properties(doc)
     if mass.get('errors'):raise RuntimeError('Assembly mass-property readback failed')
+    from .materials import native_values
+    from .bom import summarize
+    precise=native_values(doc);physical=summarize(spec,rows,precise['mass_g'])
+    mass.update(volume_mm3=precise['volume_mm3'],mass_g=physical['mass_g'],mass_known=physical['mass_known'],native_default_or_assigned_mass_g=precise['mass_g'],density_kg_m3=precise['density_kg_m3'] if physical['mass_known'] else None)
+    mass['warnings']=[] if physical['mass_known'] else [physical['note']]
     from .validation import mate_readback
     mate_details=mate_readback(doc,spec,record);passed=passed and mate_details['passed']
     return {'passed':bool(passed),'component_count':len(components),'components':rows,
         'mate_features':mates,'planned_mates':len(spec.mates),'created_mates':len(record['mates']),
         'interference':interference,'allow_motion':spec.allow_motion,
         'exact_bounds':{'min':minimum,'max':maximum,'size_mm':[b-a for a,b in zip(minimum,maximum)],'method':'transformed native GetExtremePoint'},
-        'mass_properties':mass,'mate_readback':mate_details,
+        'mass_properties':mass,'physical_properties':physical,'mate_readback':mate_details,
         'review_note':'Pose/mate/interference checks do not certify load capacity, tolerance or mechanism motion'}
 
 
@@ -380,6 +395,11 @@ def execute_stage(app,spec_path,output_dir,stage,allowed_root):
                 volume=sum(a._body_mass_props(b,'mm')['volume_exact'] for b in bodies);expected=part.expected_volume()
                 record['verification']={'passed':bool(bodies) and volume>0 and (expected is None or math.isclose(volume,expected,rel_tol=1e-6,abs_tol=1e-3)) and (part.shape=='existing' or quality['status'] in {'pass','native_standard_profiles_verified'}),
                     'body_count':len(bodies),'volume_mm3':volume,'sketch_quality':quality,'exact_bounds':_exact_bounds(bodies)}
+                from .materials import verify as verify_material
+                material_readback=verify_material(doc,saved_part['physical_properties'])
+                record['verification']['physical_properties']=material_readback['actual']
+                record['verification']['material_readback']=material_readback
+                record['verification']['passed']=record['verification']['passed'] and material_readback['passed']
                 edited=record['parts'][part.id].get('dimension_edits')
                 if edited:
                     from .dimensions import verify as verify_dimensions
@@ -457,9 +477,10 @@ def execute_stage(app,spec_path,output_dir,stage,allowed_root):
                 expected_bodies=sum(record['parts'][i.part_id]['body_count'] for i in spec.instances)
                 record['verification']['step_reimport']=verify_assembly_step(app,doc,step,record['verification'],expected_bodies)
                 doc=open_document(app,str(path),silent=True,raise_on_error=True)
+                from .bom import rows as physical_bom
+                bom=physical_bom(spec,record['parts'],record['verification']['components'])
                 with (out/'assembly_bom.csv').open('w',newline='',encoding='utf-8-sig') as stream:
-                    writer=csv.writer(stream);writer.writerow(['part_id','label','quantity','native_file'])
-                    for p in spec.parts:writer.writerow([p.id,p.label,sum(i.part_id==p.id for i in spec.instances),Path(record['parts'][p.id]['path']).name])
+                    writer=csv.DictWriter(stream,fieldnames=list(bom[0]));writer.writeheader();writer.writerows(bom)
                 with (out/'assembly_bom.csv').open(encoding='utf-8-sig',newline='') as stream:record['bom_rows']=list(csv.DictReader(stream))
             manifest=export_design_previews(a,doc,out)
             previews=[str(out/v['file']) for v in manifest['views']]

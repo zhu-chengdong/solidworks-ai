@@ -20,6 +20,7 @@ DEFAULTS = {
         "executor": {"provider": "openai", "model": "gpt-5.4-mini"},
     },
     "max_turns": 14,
+    "planner_token_budget": 16384,
 }
 KEY_PATTERN = re.compile(r"\b(?:sk-[A-Za-z0-9_-]{8,}|ms-[A-Za-z0-9_-]{16,})\b")
 
@@ -149,6 +150,10 @@ class SettingsStore:
         if not 2 <= turns <= 30:
             raise UserFacingError("执行步数需要在2到30之间。")
         result["max_turns"] = turns
+        budget = settings.get('planner_token_budget', 16384)
+        if isinstance(budget, bool) or not isinstance(budget, int) or not 1024 <= budget <= 128000:
+            raise UserFacingError('规划与复核响应预算需要是1024到128000之间的整数。')
+        result['planner_token_budget'] = budget
         return result
 
     def public(self):
@@ -182,4 +187,4 @@ class SettingsStore:
         if not key:
             title = "理解与规划" if name == "planner" else "执行操作"
             raise UserFacingError(f"请先在设置中保存{title}所用供应商的API密钥。")
-        return {**role, **profile, "key": key}
+        return {**role, **profile, "key": key, **({'token_budget':settings['planner_token_budget']} if name=='planner' else {})}

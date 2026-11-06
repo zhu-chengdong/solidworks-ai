@@ -6,9 +6,9 @@
 
 ## 下载与开始使用
 
-**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.13.0-rc7/SolidWorksAI-0.13.0-rc7-windows-x64.zip)**
+**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.14.0-rc11/SolidWorksAI-0.14.0-rc11-windows-x64.zip)**
 
-当前版本为 **0.13.0-rc7 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.13.0-rc7)。
+当前版本为 **0.14.0-rc11 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.14.0-rc11)。
 
 1. 准备 Windows 64 位电脑，并安装、激活 SolidWorks 2024。
 2. 点击上面的下载链接，下载后右键压缩包，选择“全部解压缩”。
@@ -34,6 +34,7 @@ SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年
 
 | 版本 | 主要更新 |
 | --- | --- |
+| [0.14.0-rc11](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.14.0-rc11) | 原生材料、质量BOM与MAX预算控制 |
 | [0.13.0-rc7](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.13.0-rc7) | 可编辑长圆槽与多边形口袋 |
 | [0.12.0-rc2](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.12.0-rc2) | 原生孔阵列与镜像 |
 | [0.11.0-rc3](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.11.0-rc3) | 标准孔与真实内外螺纹 |

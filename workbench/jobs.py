@@ -285,6 +285,8 @@ class JobManager:
             job.collect_artifacts()
             job.finish("cancelled", str(exc))
         except BaseException as exc:
+            from .failure_trace import failure_trace
+            job.event('failure_trace', '任务错误位置已记录；不保存异常参数或局部变量。', diagnostic=failure_trace(exc))
             if job.review_status:job.review_status['state']='unresolved'
             job.collect_artifacts()
             phase = "cancelled" if isinstance(underlying_user_error(exc), JobStopped) else ("review_required" if job.owns_document else "failed")

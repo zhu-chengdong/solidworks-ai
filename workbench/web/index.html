@@ -73,7 +73,7 @@
         <label class="vision-option"><input id="planner-vision" type="checkbox">该理解模型支持图片输入</label>
         <div class="role-card"><div><strong>执行操作</strong><small>负责原生工具调用与执行结果说明</small></div><div class="role-fields"><select id="executor-provider" aria-label="执行模型供应商"></select><input id="executor-model" aria-label="执行模型名称" spellcheck="false"></div></div>
         <label for="executor-effort">执行思考强度</label><select id="executor-effort"><option value="auto">沿用默认分工</option><option value="none">关闭思考</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">MAX（最高）</option></select><p class="small-note">DeepSeek支持关闭、Low、High和MAX；实际支持以所选模型API为准，失败时不会自动降低强度。MAX模式会等待更长时间，Token按实际用量记录。</p>
-        <details><summary>任务执行设置</summary><label for="max-turns">最多执行轮数</label><input id="max-turns" type="number" min="2" max="30"><p class="small-note">达到上限时停止继续操作，并保留已经生成的文件。</p></details>
+        <details><summary>任务执行设置</summary><label for="max-turns">最多执行轮数</label><input id="max-turns" type="number" min="2" max="30"><p class="small-note">达到上限时停止继续操作，并保留已经生成的文件。</p><label for="planner-token-budget">规划与复核首轮响应预算</label><input id="planner-token-budget" type="number" min="1024" max="128000" step="1"><p class="small-note">包含思考与回答Token，不改变MAX等推理强度。默认16384；规划达到上限时最多自动调整一次，预算最多翻倍至128000。输入Token另计。</p></details>
       </div></section>
       <div id="settings-notice" class="settings-notice" role="status" hidden></div>
       <div id="connection-results"></div>
