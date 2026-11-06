@@ -6,9 +6,9 @@ Build editable parts and assemblies in your own **SOLIDWORKS 2024** using natura
 
 ## Download and start
 
-**[Download Windows x64 — includes the EXE](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.9.0-rc1/SolidWorksAI-0.9.0-rc1-windows-x64.zip)**
+**[Download Windows x64 — includes the EXE](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.9.0-rc1/SolidWorksAI-0.10.0-rc1-windows-x64.zip)**
 
-Current version: **0.9.0-rc1 prerelease**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.9.0-rc1).
+Current version: **0.10.0-rc1 prerelease**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.9.0-rc1).
 
 1. Install and activate your own SOLIDWORKS 2024 on Windows x64.
 2. Download the Windows ZIP and extract it completely.
@@ -23,6 +23,7 @@ Upload a parametric SLDPRT and describe local dimension changes. The app inspect
 
 | Release | Main changes |
 | --- | --- |
+| [0.10.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.10.0-rc1) | Add verified native fillets and chamfers to structured part plans |
 | [0.9.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.9.0-rc1) | Add native local dimension editing through natural language |
 | [0.8.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.8.0-rc1) | Sloped/circular-arc three views, three-axis holes, drill points, countersinks and bilingual documentation |
 | [0.7.0-rc3](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.7.0-rc3) | Stepped three views, flat-bottom blind holes, counterbores and native readback |

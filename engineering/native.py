@@ -160,7 +160,7 @@ def _make_part(app,part,path,cad_inputs):
     quality=inspect_model_sketches(doc)
     if not imported and quality['status']!='pass':raise RuntimeError('Generated engineering sketches are not fully defined')
     volume=sum(a._body_mass_props(b,'mm')['volume_exact'] for b in bodies)
-    expected=part.expected_volume()
+    expected=part.expected_volume(include_treatments=False)
     if expected is not None and (len(bodies)!=1 or not math.isclose(volume,expected,rel_tol=1e-6,abs_tol=1e-3)):
         raise RuntimeError(f'Part B-Rep volume mismatch: {volume} vs {expected}')
     bounds=_exact_bounds(bodies)
@@ -179,12 +179,27 @@ def _make_part(app,part,path,cad_inputs):
             raise RuntimeError('Native part extent differs from the declared recipe coordinates')
     geometry=geometry_evidence(a,doc,part.geometry()) if part.shape in {'plate','l_bracket','profile'} else None
     if geometry and not geometry['passed']:raise RuntimeError('Native outline or hole position verification failed')
+    base_geometry=geometry;treatments=[]
+    if part.edge_treatments:
+        if dimension_edits is None:
+            from .dimensions import catalog
+            dimension_edits={'before':catalog(doc),'changes':[],'purpose':'preserve driving dimensions during finishing'}
+        from .finishing import apply as apply_treatments
+        treatments=apply_treatments(doc,part.edge_treatments)
+        bodies=a._get_solid_bodies(doc)
+        if len(bodies)!=1:raise RuntimeError('Edge treatment changed solid body count')
+        volume=sum(a._body_mass_props(b,'mm')['volume_exact'] for b in bodies)
+        if volume<=0:raise RuntimeError('Edge treatment produced invalid material volume')
+        bounds=_exact_bounds(bodies);expected=None;geometry=None
+        if dimension_edits:
+            from .dimensions import catalog
+            dimension_edits['after_operations']=catalog(doc)
     doc.ClearSelection2(True)
     if not save_document(doc,str(path)):raise RuntimeError('Native part save failed')
     step=path.with_suffix('.step');export=export_full_step(app,doc,step)
     return doc,{'id':part.id,'shape':part.shape,'path':str(path),'step':str(step),'body_count':len(bodies),
         'volume_mm3':volume,'expected_volume_mm3':expected,'sketch_quality':quality,'step_export':export,
-        'parameters':part.model_dump(),'imported':imported,'exact_bounds':bounds,'geometry':geometry,'dimension_edits':dimension_edits}
+        'parameters':part.model_dump(),'imported':imported,'exact_bounds':bounds,'geometry':geometry,'base_geometry':base_geometry,'dimension_edits':dimension_edits,'edge_treatments':treatments}
 
 
 def _assembly_snapshot(doc,spec,record):
@@ -214,6 +229,8 @@ def _assembly_snapshot(doc,spec,record):
             from .dimensions import verify as verify_dimensions
             dimension_readback=verify_dimensions(part_model,edited)
             passed=passed and dimension_readback['passed']
+        treatment_readback=_verify_treatments(part_model,record['parts'][instance.part_id])
+        passed=passed and treatment_readback['passed']
         bounds=_exact_bounds(bodies,transform);assembly_bounds.append(bounds)
         rows.append({'id':instance.id,'name':name,'path':str(_get(component,'GetPathName')),
             'position_mm':[v*1000 for v in transform[9:12]],'rotation_matrix':transform[:9],
@@ -221,6 +238,7 @@ def _assembly_snapshot(doc,spec,record):
             'constrained_status':constrained,'constraint_verified':constraint_ok,'source_verified':source_ok,
             'exact_bounds':bounds,
             'dimension_edits':dimension_readback,
+            'edge_treatments':treatment_readback,
             'suppression_state':int(_get(component,'GetSuppression'))})
     mates=collect_mate_feature_summary(doc)
     actual_mates=[m for m in mates if m['type']!='MateGroup']
@@ -242,6 +260,12 @@ def _assembly_snapshot(doc,spec,record):
         'exact_bounds':{'min':minimum,'max':maximum,'size_mm':[b-a for a,b in zip(minimum,maximum)],'method':'transformed native GetExtremePoint'},
         'mass_properties':mass,'mate_readback':mate_details,
         'review_note':'Pose/mate/interference checks do not certify load capacity, tolerance or mechanism motion'}
+
+
+def _verify_treatments(doc,record):
+    from .finishing import EdgeTreatment,read
+    rows=[read(doc,r['native']['feature'],EdgeTreatment.model_validate(r['operation'])) for r in record.get('edge_treatments',[])]
+    return {'passed':all(r['passed'] for r in rows),'features':rows}
 
 
 def execute_stage(app,spec_path,output_dir,stage,allowed_root):
@@ -337,6 +361,15 @@ def execute_stage(app,spec_path,output_dir,stage,allowed_root):
                     record['verification']['dimension_edits']=readback
                     record['verification']['passed']=record['verification']['passed'] and readback['passed']
                     if not readback['passed']:raise RuntimeError('Saved/reopened local dimension edits did not verify')
+                treatments=_verify_treatments(doc,record['parts'][part.id])
+                record['verification']['edge_treatments']=treatments
+                record['verification']['passed']=record['verification']['passed'] and treatments['passed']
+                if treatments['features']:
+                    saved=record['parts'][part.id]
+                    persistent=len(bodies)==saved['body_count'] and math.isclose(volume,saved['volume_mm3'],rel_tol=1e-8,abs_tol=1e-3)
+                    record['verification']['edge_treatment_geometry_persisted']=persistent
+                    record['verification']['passed']=record['verification']['passed'] and persistent
+                    if not persistent:raise RuntimeError('Edge treatment geometry changed after saving/reopening')
             record['verification']['save_reopen_verified']=True
         elif kind=='delivery':
             from integrations.czuryk.step_export import export_full_step

@@ -9,6 +9,7 @@ from typing import Annotated,Literal
 from pydantic import BaseModel,ConfigDict,Field,model_validator
 from integrations.czuryk.reference_build import ReferenceGeometry,CircularHole
 from .dimensions import DimensionChange
+from .finishing import EdgeTreatment
 
 
 def _plane_normal(instance,plane):
@@ -35,6 +36,7 @@ class PartSpec(BaseModel):
     profile:ReferenceGeometry|None=None
     source_id:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
     dimension_changes:list[DimensionChange]=Field(default_factory=list,max_length=24)
+    edge_treatments:list[EdgeTreatment]=Field(default_factory=list,max_length=8)
     color_rgb:list[Annotated[float,Field(ge=0,le=1)]]=Field(default_factory=lambda:[.72,.77,.83],min_length=3,max_length=3,description='Normalized RGB channels, each from 0 to 1; do not use 0 to 255 values.')
 
     @model_validator(mode='after')
@@ -70,7 +72,8 @@ class PartSpec(BaseModel):
             depth=self.height_mm if self.shape=='enclosure' else self.thickness_mm
         return ReferenceGeometry(family='prism',points=points,depth_mm=depth,holes=self.holes)
 
-    def expected_volume(self):
+    def expected_volume(self,include_treatments=True):
+        if include_treatments and self.edge_treatments:return None
         if self.shape=='existing':return None
         if self.shape=='shaft':return math.pi*(self.diameter_mm/2)**2*self.length_mm
         volume=self.geometry().expected_volume()
@@ -183,5 +186,6 @@ def skill_context():
         'limits':'Static assemblies of the listed recipes; this does not certify load, manufacturing tolerances or motion.'},
       'editing':'Uploaded existing parts support true local dimension_changes: use exact name, before_value and unit from native dimension catalog, plus requested value. Preserve all other driving dimensions and features. Ambiguous dimension intent requires clarification. Parameter-less imported solids cannot be dimension-edited. For previous recipe designs, return a COMPLETE revised design preserving unspecified parts, dimensions and mates; create a new revision. Never overwrite originals.',
       'requirements':'ask only missing critical dimensions, interfaces, hole type and intended mating relationship; no arbitrary defaults for engineering parts; visual-only estimates require explicit user permission and assumptions',
-      'not_yet_qualified':'automatic true threads, gears, arbitrary fillets, mechanisms, tolerance design and manufacturing drawings need separate native 2024 qualification; do not silently omit requested features',
+      'edge_treatments':'Each part supports ordered constant-radius fillet and distance-angle chamfer operations. target=vertical_edges selects all straight Z-parallel edges; top_outer/bottom_outer select the sole extreme-Z planar face outer loop (exclude holes); hole_mouth requires exact hole_center_mm XYZ and hole_radius_mm. size_mm is radius or chamfer distance; angle_deg defaults45. expected_edges must match actual B-Rep before writing (4 vertical edges then 8 top perimeter edges for a four-corner-rounded plate). Read back actual native feature parameters after saving/reopening. No automatic radius reduction. Complex/multiple top faces require clarification or separate qualification.',
+      'not_yet_qualified':'automatic true threads, gears, variable-radius/face/full-round fillets, mechanisms, tolerance design and manufacturing drawings need separate native 2024 qualification; do not silently omit requested features',
       'skills':['solidworks-vibecad','solidworks-automation/part','solidworks-automation/assembly','solidworks-automation/review']}

@@ -59,6 +59,9 @@ async def diagnose():
     if not all(callable(f) for f in (plan_analytic,create_analytic,measure_analytic)) or len(analytic_housing(None).modelspace().query('LEADER'))!=4:raise RuntimeError('Packaged analytical silhouette/conical hole adapter missing')
     from engineering.spec import DesignSpec,skill_context
     from engineering.dimensions import DimensionChange,catalog,apply as apply_dimensions,verify as verify_dimensions
+    from engineering.finishing import EdgeTreatment,apply as apply_treatments,read as read_treatment
+    EdgeTreatment(kind='fillet',target='vertical_edges',size_mm=4,expected_edges=4)
+    if not all(callable(f) for f in (apply_treatments,read_treatment)):raise RuntimeError('Packaged edge treatment adapter missing')
     DimensionChange(name='D1@Boss',before_value=8,value=12)
     if not all(callable(f) for f in (catalog,apply_dimensions,verify_dimensions)):raise RuntimeError('Packaged local dimension adapter missing')
     from engineering.native import execute_stage

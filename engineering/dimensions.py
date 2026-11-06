@@ -53,10 +53,12 @@ def catalog(doc):
 
 
 def verify(doc,evidence):
-    actual=catalog(doc);before={d['name']:d for d in evidence['before']['dimensions']}
+    actual=catalog(doc);baseline=evidence.get('after_operations',evidence['before']);before={d['name']:d for d in baseline['dimensions']}
+    before.update({d['name']:d for d in evidence['before']['dimensions']})
     current={d['name']:d for d in actual['dimensions']};changes={c['name']:c for c in evidence['changes']}
     failures=[]
-    if actual['features']!=evidence['before']['features']:failures.append('Feature tree changed during a dimension-only edit')
+    if actual['features']!=baseline['features']:failures.append('Feature tree changed unexpectedly')
+    if any(actual['features'].get(k)!=v for k,v in evidence['before']['features'].items()):failures.append('Original feature identities changed')
     if set(before)!=set(current):failures.append('Dimension catalog changed')
     for name,old in before.items():
         now=current.get(name);wanted=changes[name]['value'] if name in changes else old['value']

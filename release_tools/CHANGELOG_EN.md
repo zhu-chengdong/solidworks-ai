@@ -4,6 +4,13 @@ English | [简体中文](CHANGELOG.md)
 
 Published tags, their original notes and downloads remain in [GitHub Releases](https://github.com/zhu-chengdong/solidworks-ai/releases). Unpublished local candidates are not listed as public releases. All current releases are Windows x64 prereleases; native CAD acceptance targets SOLIDWORKS 2024.
 
+## 0.10.0-rc1
+
+- Structured natural-language plans now support ordered constant-radius fillets and distance-angle chamfers on new or uploaded parts.
+- Selects native Z-parallel edges, extreme-Z planar outer loops or exact circular hole mouths. Checks expected edge counts, excludes hole loops from the outer perimeter and never silently reduces requested sizes.
+- After reopening, verifies native Fillet/Chamfer definitions, radius, distance, angle, selected-edge count and solid volume. A two-hole mount passed R4 vertical-corner fillets and a full C1/45-degree top perimeter chamfer against an independent volume calculation.
+- Includes actual packaged-UI acceptance and standalone relocation tests. Variable-radius/face fillets, ambiguous multiple top faces and SOLIDWORKS2026 are not locally qualified. Standard holes and threads follow as separate validated updates.
+
 ## 0.9.0-rc1
 
 - Adds structured natural-language local editing of uploaded SLDPRT driving dimensions, using native names, old values and units. CAD bytes stay local.
