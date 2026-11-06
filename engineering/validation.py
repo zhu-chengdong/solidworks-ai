@@ -44,12 +44,27 @@ def mate_readback(doc,spec,record):
     return {'passed':len(rows)==len(planned) and all(r['verified'] for r in rows),'mates':rows}
 
 
-def verify_assembly_step(app,doc,step,verification,expected_bodies):
+def verify_assembly_step(app,doc,step,verification,expected_bodies,geometry_validator=None):
     from .native import _get,_exact_bounds,_atomic
     from scripts.sw_connect import open_document
     from scripts.sw_assembly import _activate_model_document
     from scripts.sw_measure import collect_mass_properties
     from solidworks_mcp.automation.com_utils import resolve_solidworks_constant as constant
+    import pythoncom,win32com.client
+    def precise_volume(model):
+        # STEP spline faces can have a different default integration accuracy
+        # from native analytic faces. Compare both at the documented maximum
+        # accuracy instead of relaxing the existing geometry tolerance.
+        status=win32com.client.VARIANT(pythoncom.VT_BYREF|pythoncom.VT_I4,0)
+        values=list(model.Extension.GetMassProperties2(2,status,False) or [])
+        if status.value!=0 or len(values) not in (12,13) or not math.isfinite(values[3]) or values[3]<=0:
+            raise RuntimeError('Maximum-accuracy native volume measurement failed')
+        if len(values)==13 and values[12]!=2:raise RuntimeError('Native volume did not use maximum accuracy')
+        return values[3]*1e9
+    native_volume=precise_volume(doc)
+    snapshot_volume=verification['mass_properties']['volume_mm3']
+    if not math.isclose(native_volume,snapshot_volume,rel_tol=1e-5,abs_tol=.01):
+        raise RuntimeError('Native volume changed since the verified snapshot')
     # Distinct name prevents SolidWorks reusing an already open native document.
     folder=Path(step).parent/'validation';folder.mkdir(exist_ok=True)
     source=folder/('reimport_'+Path(step).name);source.write_bytes(Path(step).read_bytes())
@@ -97,15 +112,19 @@ def verify_assembly_step(app,doc,step,verification,expected_bodies):
         actual={'min':[min(b['min'][i] for b in bounds) for i in range(3)],
                 'max':[max(b['max'][i] for b in bounds) for i in range(3)]}
         actual['size_mm']=[b-a for a,b in zip(actual['min'],actual['max'])]
-        mass=collect_mass_properties(imported);volume=mass['volume_mm3']
-        wanted=verification['exact_bounds'];expected_volume=verification['mass_properties']['volume_mm3']
+        mass=collect_mass_properties(imported);volume=precise_volume(imported)
+        wanted=verification['exact_bounds'];expected_volume=native_volume
         passed=(count==expected_bodies and not mass.get('errors') and
             math.isclose(volume,expected_volume,rel_tol=1e-5,abs_tol=.01) and
             all(abs(a-b)<.01 for k in ('min','max') for a,b in zip(actual[k],wanted[k])))
         result={'passed':passed,'reimported_body_count':count,'expected_bodies':expected_bodies,
                 'volume_mm3':volume,'expected_volume_mm3':expected_volume,'exact_bounds':actual,
-                'native_reimport':True,'geometry_only':True}
+                'native_reimport':True,'geometry_only':True,'volume_accuracy':'maximum',
+                'default_imported_volume_mm3':mass['volume_mm3'],'snapshot_volume_mm3':snapshot_volume}
         if not passed:raise RuntimeError('Assembly STEP reimport differs from the native instance geometry: '+str(result))
+        if geometry_validator is not None:
+            result['thread_geometry']=geometry_validator(imported)
+            if not result['thread_geometry']['passed']:raise RuntimeError('Reimported STEP thread geometry failed')
         return result
     finally:
         if imported is not None:app.CloseDoc(str(_get(imported,'GetTitle')))

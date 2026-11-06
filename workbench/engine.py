@@ -429,7 +429,7 @@ class WorkbenchEngine:
                     '只有提供或已从此前计划明确的关键尺寸才可建工程件；缺项先问必要问题，design=null。'
                     '不支持的特征明确supported=false，不得省略，也不得让执行模型临时写代码。'
                     '上传的CAD文件只以source_id引用；文件内容留在本机，不假装从文件名读到了尺寸。'
-                    '局部改模用shape=existing和dimension_changes，尺寸name、before_value、unit必须来自本轮已有零件原生回读，不得编造尺寸名；value是用户要求的新值。其他尺寸与特征保持，另存副本。无法唯一匹配时先澄清。'
+                    '局部改模用shape=existing和dimension_changes，只能选editable=true的尺寸；name、before_value、unit必须来自本轮原生回读，不得编造尺寸名；value是新值。标准孔和Thread管理的尺寸不能通过通用尺寸修改；无法唯一匹配时先澄清。'
                     '使用已有零件且关键配合尺寸未知时，先只读检查或请用户补充，不猜。'
                     '对已有design的自然语言修改返回完整修订design，保留所有未提及参数和组件；以新文件重建修订，保留前版。'
                     '孔坐标以零件XY中心为基准；plate厚度沿Z；shaft沿Z；l_bracket截面在XY，width为Z宽度。'

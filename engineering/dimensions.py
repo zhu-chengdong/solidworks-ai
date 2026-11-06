@@ -22,9 +22,13 @@ class DimensionChange(BaseModel):
 def catalog(doc):
     from scripts.sw_connect import get_com_member as get
     dimensions={};features={}
-    def visit(feature,depth=0):
+    def visit(feature,depth=0,managed=False):
         if depth>16:raise RuntimeError('Feature nesting exceeds inspection limit')
         name=str(get(feature,'Name'));kind=str(get(feature,'GetTypeName2'))
+        managed=managed or kind in {'HoleWzd','SweepThread'}
+        owner=get(feature,'GetOwnerFeature',default=None)
+        consumers=[owner] if owner is not None else list(get(feature,'GetChildren',default=[]) or [])
+        managed=managed or any(str(get(f,'GetTypeName2')) in {'HoleWzd','SweepThread'} for f in consumers)
         if name in features:return
         features[name]=kind
         display=get(feature,'GetFirstDisplayDimension',default=None)
@@ -38,13 +42,13 @@ def catalog(doc):
                 state=int(get(dimension,'DrivenState'))
                 dimensions[key]={'name':key,'feature':key.split('@')[1],'feature_type':features.get(key.split('@')[1],kind),'dimension_type':dtype,
                     'value':math.degrees(raw) if angular else raw*1000,'unit':'deg' if angular else 'mm',
-                    'driven_state':state,'editable':state==2 and dtype in {2,3,4,5,6,11,12,14,15,16}}
+                    'driven_state':state,'editable':not managed and state==2 and dtype in {2,3,4,5,6,11,12,14,15,16},'native_standard_managed':managed}
             display=get(feature,'GetNextDisplayDimension',display,default=None)
         else:raise RuntimeError('Dimension catalog exceeds inspection limit')
         child=get(feature,'GetFirstSubFeature',default=None)
         for _ in range(512):
             if child is None:break
-            visit(child,depth+1);child=get(child,'GetNextSubFeature',default=None)
+            visit(child,depth+1,managed);child=get(child,'GetNextSubFeature',default=None)
     feature=get(doc,'FirstFeature',default=None)
     for _ in range(2048):
         if feature is None:break

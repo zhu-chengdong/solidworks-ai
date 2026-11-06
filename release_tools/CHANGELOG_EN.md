@@ -4,6 +4,16 @@ English | [简体中文](CHANGELOG.md)
 
 Published tags, their original notes and downloads remain in [GitHub Releases](https://github.com/zhu-chengdong/solidworks-ai/releases). Unpublished local candidates are not listed as public releases. All current releases are Windows x64 prereleases; native CAD acceptance targets SOLIDWORKS 2024.
 
+## 0.11.0-rc3
+
+- Adds native ISO Hole Wizard clearance, counterbore, countersink and tapped holes in coarse M3/M4/M5/M6/M8/M10/M12 sizes, with standard-table dimensions and close/normal/loose fits. Supports signed principal-axis planar entries and explicit blind/Through All conditions.
+- Adds real metric internal/external threads. Distinguishes manufacturing tap drills with cosmetic callouts from theoretical-carrier modeled threads; checks entry, material span, drill/thread depths and library sizes. Modeled entry is limited to local +Z cylinders. No cosmetic/polyline fallback for modeled requests.
+- Independently verifies pitch and handedness from native helical B-Rep edges, plus nominal radius, Thread definitions, real material removal, save/reopen and STEP. An inactive PitchOverride value is never mistaken for the effective pitch. Actual STEP reimport verifies exact bounds, volume, pitch and handedness; native blind depth and full swept-profile extent are reported separately.
+- Preserves and reports native-library profile Fix relations separately. App-created stock/position sketches use driving constraints without added Fix. Generic dimension edits cannot bypass standard-feature parameter management.
+- Packaged natural-language acceptance combines local thickness editing, R4 fillets, C1 chamfers, four ISO hole families and a real M6 blind thread. Separate native trials cover six-axis entries, origin positioning, M6 internal and M8 external threads; all earlier releases remain available.
+- STEP reimport volume comparisons use maximum native integration accuracy without relaxing the tolerance. A standard-hole plate and real M8 threaded shaft assembly passes native mate, interference, save/reopen and STEP checks. Homepage download links now use the matching release tag.
+- SOLIDWORKS2026, fine/imperial/pipe/multiple-start and non-Z modeled threads are not locally qualified. This release does not certify manufacturing tolerances or strength.
+
 ## 0.10.0-rc1
 
 - Structured natural-language plans now support ordered constant-radius fillets and distance-angle chamfers on new or uploaded parts.

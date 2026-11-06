@@ -10,6 +10,8 @@ from pydantic import BaseModel,ConfigDict,Field,model_validator
 from integrations.czuryk.reference_build import ReferenceGeometry,CircularHole
 from .dimensions import DimensionChange
 from .finishing import EdgeTreatment
+from .standard_holes import StandardHole
+from .threads import MetricThread
 
 
 def _plane_normal(instance,plane):
@@ -37,6 +39,8 @@ class PartSpec(BaseModel):
     source_id:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
     dimension_changes:list[DimensionChange]=Field(default_factory=list,max_length=24)
     edge_treatments:list[EdgeTreatment]=Field(default_factory=list,max_length=8)
+    standard_holes:list[StandardHole]=Field(default_factory=list,max_length=12)
+    metric_threads:list[MetricThread]=Field(default_factory=list,max_length=8)
     color_rgb:list[Annotated[float,Field(ge=0,le=1)]]=Field(default_factory=lambda:[.72,.77,.83],min_length=3,max_length=3,description='Normalized RGB channels, each from 0 to 1; do not use 0 to 255 values.')
 
     @model_validator(mode='after')
@@ -51,6 +55,10 @@ class PartSpec(BaseModel):
         if self.shape!='existing' and self.source_id:raise ValueError('Only existing parts can reference a CAD input')
         if self.dimension_changes and self.shape!='existing':raise ValueError('Local dimension edits require an uploaded existing part')
         if len({c.name for c in self.dimension_changes})!=len(self.dimension_changes):raise ValueError('Duplicate dimension edit')
+        points=[h.point_mm for h in self.standard_holes]
+        if any(math.dist(p,q)<1e-4 for i,p in enumerate(points) for q in points[i+1:]):raise ValueError('Use a single compound standard-hole operation at each entry')
+        if any(math.dist(t.point_mm,h.point_mm)<1e-4 for t in self.metric_threads for h in self.standard_holes):raise ValueError('Use the standard hole modeled option instead of a duplicate thread operation')
+        if self.shape=='shaft' and any(not t.internal and abs(t.nominal_mm-self.diameter_mm)>1e-5 for t in self.metric_threads):raise ValueError('External metric thread requires its nominal shaft diameter')
         if self.shape!='profile' and self.profile is not None:raise ValueError('Unexpected free profile')
         if self.shape=='profile' and self.profile.family not in {'prism','revolve'}:raise ValueError('Use the image workflow for smooth loft scenes')
         if self.shape=='l_bracket' and self.thickness_mm>=min(self.length_mm,self.height_mm):raise ValueError('Bracket wall exceeds its legs')
@@ -73,7 +81,7 @@ class PartSpec(BaseModel):
         return ReferenceGeometry(family='prism',points=points,depth_mm=depth,holes=self.holes)
 
     def expected_volume(self,include_treatments=True):
-        if include_treatments and self.edge_treatments:return None
+        if include_treatments and (self.edge_treatments or self.standard_holes or self.metric_threads):return None
         if self.shape=='existing':return None
         if self.shape=='shaft':return math.pi*(self.diameter_mm/2)**2*self.length_mm
         volume=self.geometry().expected_volume()
@@ -187,5 +195,10 @@ def skill_context():
       'editing':'Uploaded existing parts support true local dimension_changes: use exact name, before_value and unit from native dimension catalog, plus requested value. Preserve all other driving dimensions and features. Ambiguous dimension intent requires clarification. Parameter-less imported solids cannot be dimension-edited. For previous recipe designs, return a COMPLETE revised design preserving unspecified parts, dimensions and mates; create a new revision. Never overwrite originals.',
       'requirements':'ask only missing critical dimensions, interfaces, hole type and intended mating relationship; no arbitrary defaults for engineering parts; visual-only estimates require explicit user permission and assumptions',
       'edge_treatments':'Each part supports ordered constant-radius fillet and distance-angle chamfer operations. target=vertical_edges selects all straight Z-parallel edges; top_outer/bottom_outer select the sole extreme-Z planar face outer loop (exclude holes); hole_mouth requires exact hole_center_mm XYZ and hole_radius_mm. size_mm is radius or chamfer distance; angle_deg defaults45. expected_edges must match actual B-Rep before writing (4 vertical edges then 8 top perimeter edges for a four-corner-rounded plate). Read back actual native feature parameters after saving/reopening. No automatic radius reduction. Complex/multiple top faces require clarification or separate qualification.',
-      'not_yet_qualified':'automatic true threads, gears, variable-radius/face/full-round fillets, mechanisms, tolerance design and manufacturing drawings need separate native 2024 qualification; do not silently omit requested features',
+      'standard_holes':'standard_holes invokes the real ISO Hole Wizard: clearance ISO273, counterbore ISO4762, countersink ISO10642, tapped; M3/M4/M5/M6/M8/M10/M12. size is nominal screw size, not drill diameter. fit close/normal/loose for clearance families. point_mm is exact XYZ planar entry; outward is signed axis; depth_mm=null explicitly means Through All, otherwise cylindrical drill depth, with native drill point. Ask if hole family/termination is unclear. Tapped thread_representation=cosmetic uses standard manufacturing drill/callout; modeled creates a real native Thread with theoretical ISO carrier diameter and requires thread_depth_mm and local +Z entry. Compiler computes carrier diameter from the native nominal/pitch, do not ask user to calculate it. Specify thread_depth_mm to distinguish thread and drill lengths. Does not certify tolerance class.',
+      'metric_threads':'metric_threads adds a real ISO metric coarse Thread to an existing full circular carrier: nominal-sized external shaft, or theoretical-minor-diameter internal bore D-1.08253175473*P. Local Z-axis, top/+Z entry only; provide exact point_mm and length_mm, right_handed. New internal tapped holes should use standard_holes kind=tapped,thread_representation=modeled, not duplicate metric_threads. New shafts use shape=shaft at nominal diameter with external metric_threads at z=length. Generic dimension_changes cannot edit Hole Wizard/Thread-managed dimensions. Native helix geometry verifies pitch and handedness; no cosmetic or polyline fallback for modeled requests.',
+      'feature_order':'copy/edit driving dimensions; validate stock geometry; edge treatments; standard holes; standalone metric threads; rebuild/save/reopen and verify every native definition and real thread geometry',
+      'native_standard_sketches':'The application creates fully constrained stock/position sketches without Fix. SOLIDWORKS Hole Wizard sections and library Thread profiles themselves may contain native Fix relations; these are native_standard_managed and remain editable through their standard feature, not generic sketch dimensions. Report actual native managed Fix counts separately, never claim every sketch has zero Fix and never remove native library constraints to fabricate that claim. Hole position at projected origin legitimately has zero independent coordinate dimensions but must have zero degrees of freedom and no Fix.',
+      'thread_step_delivery':'Modeled threads require actual STEP reimport, exact body count/bounds/volume comparison and measured helical pitch/handedness from the reimported B-Rep. Native Thread blind depth and complete swept-profile axial range are reported separately; a partial end profile can extend beyond the helix depth. Do not claim manufacturing/full-thread engagement certification.',
+      'not_yet_qualified':'fine/imperial/pipe/multiple-start or non-Z real threads, gears, variable-radius/face/full-round fillets, mechanisms, tolerance design and manufacturing drawings need separate qualification; do not silently omit requested features',
       'skills':['solidworks-vibecad','solidworks-automation/part','solidworks-automation/assembly','solidworks-automation/review']}
