@@ -4,6 +4,21 @@ English | [简体中文](CHANGELOG.zh-CN.md)
 
 Published tags, their original notes and downloads remain in [GitHub Releases](https://github.com/zhu-chengdong/solidworks-ai/releases). Unpublished local candidates are not listed as public releases. All current releases are Windows x64 prereleases; native CAD acceptance targets SOLIDWORKS 2024.
 
+## 0.13.0-rc7
+
+- Adds native editable stadium slots and simple polygon pockets through natural-language plans, on the highest local +Z planar face. Supports true Through All and flat-bottom blind cuts; slots use actual lines and circular arcs at arbitrary in-plane angles.
+- Fixes the rejected structured-output schema for pocket XY coordinates by using bounded numeric arrays rather than tuple prefixItems; exact two-coordinate validation is retained. The failed candidate remains unpublished.
+- Increases the single MAX request timeout from 600 to 1800 seconds after a measured planning timeout, retaining zero automatic retries and the requested reasoning effort. Timed-out usage is unknown, not zero-cost.
+- Fixes GPT-6 Chat Completions compatibility with max_completion_tokens and maps user-facing MAX to the endpoint-supported highest xhigh effort, retaining the 128000 output budget and recording actual effort/capacity. Planning/review use Chat and native tools use the model-required Responses route, with model roles unchanged.
+- Uses a compact native parameter contract for fresh tasks without attachments/history, retaining the complete schema, essential limits and four views while the compiler handles deterministic constraints/topology. Existing parts, images and revisions keep full context. Highest effort and128000 capacity remain unchanged; one same-task read-only plan passed in38.34s, without a general latency guarantee.
+- Selects the tool transport required by the actual API: Terra function tools with reasoning use Responses at MAX; Sol planning/review use Chat at highest xhigh. Keeps models, keys and128000 capacity, fixing execution HTTP400; preview repair uses the same effective tool route.
+- Fixes real cuts rejected when Instant3D returns ICE from GetTypeName2: resolves the underlying type through official GetTypeName and records both names. Still requires a true Cut, correct geometry/depth, consumed sketch and zero Fix. Dimension-tree identity uses the underlying type as well.
+- Distinguishes overall slot length from arc-center spacing: native center spacing is overall length minus width. Records exact entry Z and blind depth instead of using an oversized blind cut as a through cut.
+- Requires fully defined driving sketches without Fix, with actual consumed-sketch linkage, native Cut end conditions and depth readback. Rejects self-intersections, degenerate slots, excessive blind depths and incorrect removal volume.
+- Independently verifies top/bottom straight edges, arc centers/radii/midpoints/endpoints and actual depth, against analytic removal volumes. Repeats checks after save/reopen and actual STEP reimport.
+- A 180x100x20 mount combines a through slot, a 30-degree 6mm-deep slot and a 5mm-deep pentagonal pocket, with zero-Fix sketches and independent exact-volume acceptance. The packaged app runs the same design from natural language through planning, execution and review.
+- Curved/side entries, overlap with prior voids, edge breakouts, arbitrary rounded pockets, CAM toolpaths and SOLIDWORKS2026 are not qualified by this release.
+
 ## 0.12.0-rc2
 
 - Adds native associative hole linear patterns, perpendicular two-direction grids, full-circle circular patterns and XZ/YZ mirrors through natural-language plans. No per-hole copy substitution.

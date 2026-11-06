@@ -21,10 +21,11 @@ class DimensionChange(BaseModel):
 
 def catalog(doc):
     from scripts.sw_connect import get_com_member as get
+    from .feature_types import feature_type
     dimensions={};features={}
     def visit(feature,depth=0,managed=False):
         if depth>16:raise RuntimeError('Feature nesting exceeds inspection limit')
-        name=str(get(feature,'Name'));kind=str(get(feature,'GetTypeName2'))
+        name=str(get(feature,'Name'));kind,_=feature_type(feature)
         managed_types={'HoleWzd','SweepThread','LPattern','CirPattern','MirrorPattern'}
         managed=managed or kind in managed_types
         owner=get(feature,'GetOwnerFeature',default=None)

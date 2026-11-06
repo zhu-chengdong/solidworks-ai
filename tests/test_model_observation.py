@@ -71,7 +71,7 @@ class ModelObservationTests(unittest.IsolatedAsyncioTestCase):
                 await engine.run(job)
                 review=await engine.structured(store.role('planner'),'复核实际结果',Review,job)
             self.assertEqual(job.phase,'completed');self.assertTrue(review.passed)
-            self.assertEqual(len(api.requests),4);self.assertTrue(all(t==600 for t in timeouts))
+            self.assertEqual(len(api.requests),4);self.assertTrue(all(t==1800 for t in timeouts))
             self.assertEqual([body['model'] for body in api.requests],['gpt-6-astra','gpt-6.1-terra','gpt-6.1-terra','gpt-6-astra'])
             for body in api.requests:
                 self.assertEqual(body['reasoning']['effort'],'max')

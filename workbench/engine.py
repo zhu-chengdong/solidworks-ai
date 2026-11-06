@@ -29,6 +29,7 @@ from integrations.czuryk.reference_build import ReferenceGeometry
 from integrations.czuryk.loft_spec import resolved_components
 from engineering.spec import DesignSpec,skill_context
 from .native_wait import call_native
+from .model_routing import tool_profile
 
 set_tracing_disabled(True)
 logging.getLogger("openai").setLevel(logging.CRITICAL)
@@ -191,7 +192,7 @@ def inside(path, directory):
 @asynccontextmanager
 async def model_session(profile):
     async with AsyncOpenAI(api_key=profile["key"], base_url=profile["base_url"],
-                           max_retries=0, timeout=600 if profile.get('reasoning_effort')=='max' else 120) as client:
+                           max_retries=0, timeout=1800 if profile.get('reasoning_effort')=='max' else 120) as client:
         job=profile.get('_job')
         if job is not None and profile['api_style']=='responses':
             create=client.responses.create
@@ -227,7 +228,7 @@ async def model_session(profile):
             async def observed_chat(**kwargs):
                 extra=kwargs.get('extra_body');extra=extra if isinstance(extra,dict) else {}
                 effort=kwargs.get('reasoning_effort');effort=effort if isinstance(effort,str) else None
-                limit=extra.get('max_tokens',kwargs.get('max_tokens'));limit=limit if isinstance(limit,int) else None
+                limit=kwargs.get('max_completion_tokens',extra.get('max_tokens',kwargs.get('max_tokens')));limit=limit if isinstance(limit,int) else None
                 response_format=kwargs.get('response_format');response_format=response_format if isinstance(response_format,dict) else None
                 job.event('model_request','正在请求 '+profile['model']+(' · '+effort.upper() if effort else ''),
                     role=profile.get('_role'),provider=profile['provider'],model=profile['model'],reasoning_effort=effort,
@@ -287,6 +288,14 @@ def model_settings(profile, role, output_budget=None):
         model = profile["model"]
         if model.startswith(("gpt-5", "gpt-6")) or requested!='auto':
             settings.reasoning = Reasoning(effort=("low" if role == "planner" else "none") if requested=='auto' else requested)
+        if profile['api_style']=='chat_completions':
+            # Current GPT-6 Chat Completions explicitly rejects max_tokens.
+            # Its highest supported effort is named xhigh; the user-facing
+            # MAX selection continues to request the highest supported level.
+            settings.extra_args={'max_completion_tokens':budget}
+            settings.max_tokens=None
+            if requested=='max' and model in {'gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra'}:
+                settings.reasoning=Reasoning(effort='xhigh')
     elif profile["provider"] == "deepseek":
         effort=('high' if role=='planner' else 'none') if requested=='auto' else requested
         settings.extra_body = {"thinking": {"type": "disabled" if effort=='none' else "enabled"}}
@@ -386,6 +395,9 @@ class WorkbenchEngine:
         from .magpie import route_profiles
         selected_profiles = route_profiles(self.settings, job)
         planner_profile, executor_profile = selected_profiles or (self.settings.role("planner", settings), self.settings.role("executor", settings))
+        executor_profile=tool_profile(executor_profile)
+        if executor_profile.get('_requested_api_style'):
+            job.event('model_transport','执行工具按模型接口要求使用 Responses；保持原模型与推理档位',role='executor',requested_api_style=executor_profile['_requested_api_style'],api_style=executor_profile['api_style'])
         if job.references and not planner_profile.get("vision", planner_profile["provider"] == "openai"):
             raise UserFacingError("当前理解模型未启用图片输入，请在模型设置中更改。")
         job.set_phase("planning", "正在理解你的要求")
@@ -461,6 +473,9 @@ class WorkbenchEngine:
                        if job.reference_mode == "approximate" else "当前模式为按尺寸建模，不允许从照片猜测未标注的尺寸。"))
                 plan = await self.structured(planner_profile, image_input(job, planning), ReferencePlan, job)
             else:
+                if not job.cad_inputs and not job.previous_context and not job.drawing_inputs:
+                    from .planning_contract import new_task_prompt
+                    planning=new_task_prompt(job.requests,context)
                 for attempt in range(2):
                     try:
                         plan = await self.structured(planner_profile, planning, EngineeringPlan, job)
@@ -683,6 +698,7 @@ class WorkbenchEngine:
         job.check_stop();settings=self.settings.read()
         from .magpie import route_profiles
         planner, executor = route_profiles(self.settings, job) or (self.settings.role('planner',settings), self.settings.role('executor',settings))
+        executor=tool_profile(executor)
         plan=EngineeringPlan.model_validate(job.plan)
         job.set_phase('checking','正在重新复核模型与预览')
         async with self.session_factory() as session:
