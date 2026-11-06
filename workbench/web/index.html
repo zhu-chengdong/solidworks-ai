@@ -50,7 +50,7 @@
         <div class="reference-controls"><button type="button" id="drawing-upload-button">添加二维图纸</button><input id="drawing-files" type="file" accept=".dxf,.dwg,.pdf" hidden><span class="small-note">DXF/DWG三视图、斜面圆弧、三方向孔及锥底 · 0 Token；PDF按图片识别</span></div>
         <div class="small-note">下载示例图纸 <a href="/api/drawing-example" download="three-views-blind-counterbore.dxf">阶梯与沉孔</a> · <a href="/api/drawing-example?kind=sloped" download="sloped-side-holes-countersinks.dxf">斜面、侧孔与沉头</a> · <a href="/api/drawing-example?kind=curved" download="curved-arch-drill-point.dxf">圆弧与钻尖</a>。上传后输入“按三视图及孔标注建模”。</div>
         <label class="sr-only" for="message">输入设计需求</label>
-        <textarea id="message" rows="2" placeholder="描述设计需求，或上传图片并补充尺寸。"></textarea>
+        <textarea id="message" rows="2" placeholder="直接描述零件、装配要求；也可添加零件文件后说“只把厚度改成12毫米，其余保持”。"></textarea>
         <div class="composer-actions"><span id="composer-hint">Enter 发送，Shift + Enter 换行</span><button type="button" id="stop-task" class="stop" hidden>停止任务</button><button type="submit" id="send-task" class="primary">发送需求</button></div>
       </form>
       <div class="footer-note">通过本机 MCP 操作 SolidWorks · 输出保存在独立任务目录 <button id="quit-app">退出应用</button></div>

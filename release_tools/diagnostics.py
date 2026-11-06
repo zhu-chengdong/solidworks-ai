@@ -58,6 +58,9 @@ async def diagnose():
     from drawing2cad.examples import analytic_housing
     if not all(callable(f) for f in (plan_analytic,create_analytic,measure_analytic)) or len(analytic_housing(None).modelspace().query('LEADER'))!=4:raise RuntimeError('Packaged analytical silhouette/conical hole adapter missing')
     from engineering.spec import DesignSpec,skill_context
+    from engineering.dimensions import DimensionChange,catalog,apply as apply_dimensions,verify as verify_dimensions
+    DimensionChange(name='D1@Boss',before_value=8,value=12)
+    if not all(callable(f) for f in (catalog,apply_dimensions,verify_dimensions)):raise RuntimeError('Packaged local dimension adapter missing')
     from engineering.native import execute_stage
     from engineering.inspect import inspect_input
     from engineering.validation import mate_readback,verify_assembly_step
@@ -82,6 +85,6 @@ async def diagnose():
         vault.remove('diagnostic', probe_url)
     return {"environment": installation_status(), "tools": len(tools.tools), "health": health,
             "native_modules_imported": True, "reference_compiler_imported": reference_ready,"native_loft_imported":loft_ready,"engineering_imported":engineering_ready,
-            "model_called": False, "cad_connected": False,"drawing_parser_imported":drawing_ready,"advanced_drawing_imported":advanced_ready,"analytic_drawing_imported":True,"pdf_page_rendered":pdf_ready,
+            "model_called": False, "cad_connected": False,"local_dimension_adapter_imported":True,"drawing_parser_imported":drawing_ready,"advanced_drawing_imported":advanced_ready,"analytic_drawing_imported":True,"pdf_page_rendered":pdf_ready,
             "optional_pdf_review": False, "vault_probe_before":vault_before,"vault_probe_after":credential_probe(),
             "credential_dummy_roundtrip_and_cleanup": vault_roundtrip}

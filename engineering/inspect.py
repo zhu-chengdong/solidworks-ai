@@ -23,10 +23,12 @@ def inspect_input(app,input_path,sha256,allowed_root):
                     values=list(get(surface,'CylinderParams'))
                     cylinders.append({'point_mm':[v*1000 for v in values[:3]],'axis':values[3:6],'radius_mm':values[6]*1000})
         from .native import _exact_bounds
+        from .dimensions import catalog
         bounds=_exact_bounds(bodies)
         return {'status':'ok','body_count':len(bodies),'volume_mm3':sum(a._body_mass_props(b,'mm')['volume_exact'] for b in bodies),
             'bounding_box_mm':bounds['min']+bounds['max'],'exact_bounds':bounds,'bounding_box_is_approximate':False,'cylindrical_faces':cylinders[:60],
-            'principal_planes':'XY=Front Plane,XZ=Top Plane,YZ=Right Plane','source_sha256':sha256,'read_only':True}
+            'principal_planes':'XY=Front Plane,XZ=Top Plane,YZ=Right Plane','source_sha256':sha256,'read_only':True,
+            'editable_parameters':catalog(doc)}
     finally:
         if doc is not None and existing is None:app.CloseDoc(str(get(doc,'GetTitle')))
         if previous is not None:_activate_model_document(app,previous)

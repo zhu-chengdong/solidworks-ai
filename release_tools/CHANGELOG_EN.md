@@ -4,6 +4,13 @@ English | [简体中文](CHANGELOG.md)
 
 Published tags, their original notes and downloads remain in [GitHub Releases](https://github.com/zhu-chengdong/solidworks-ai/releases). Unpublished local candidates are not listed as public releases. All current releases are Windows x64 prereleases; native CAD acceptance targets SOLIDWORKS 2024.
 
+## 0.9.0-rc1
+
+- Adds structured natural-language local editing of uploaded SLDPRT driving dimensions, using native names, old values and units. CAD bytes stay local.
+- Edits a separate copy and verifies requested dimensions, untouched parameters and the feature tree after rebuilding, saving and reopening. Ambiguous targets require clarification.
+- Native SOLIDWORKS2024 acceptance changes a two-hole plate from 8 to 12 mm thick and its bores from 8 to 10 mm, preserving outline and hole positions. Includes native files, STEP, four views, checked delivery ZIP and source hashes.
+- Requires an editable parametric part. Standard holes, real threads and general edge treatments are subsequent releases. SOLIDWORKS2026 has not been locally qualified.
+
 ## 0.8.0-rc1
 
 - Add sloped and circular-arc orthographic silhouettes using exact native sketches, extrusion and two-direction outside cuts. Sampled polygons are never used to construct CAD geometry.

@@ -148,6 +148,8 @@ def _make_part(app,part,path,cad_inputs):
             feature=extrude_cut(doc,ref,(part.height_mm-part.wall_mm)/1000,direction=False)
             if feature is None:raise RuntimeError('Enclosure cavity cut failed')
             feature.Name='InteriorCavity';doc.ClearSelection2(True);plane.Select2(False,0);_get(doc,'BlankRefGeom')
+    from .dimensions import apply as apply_dimensions
+    dimension_edits=apply_dimensions(doc,part.dimension_changes) if part.dimension_changes else None
     if not _get(doc,'ForceRebuild3',False):raise RuntimeError('Native part rebuild failed')
     bodies=a._get_solid_bodies(doc)
     if not bodies:raise RuntimeError('Part contains no solid body')
@@ -182,7 +184,7 @@ def _make_part(app,part,path,cad_inputs):
     step=path.with_suffix('.step');export=export_full_step(app,doc,step)
     return doc,{'id':part.id,'shape':part.shape,'path':str(path),'step':str(step),'body_count':len(bodies),
         'volume_mm3':volume,'expected_volume_mm3':expected,'sketch_quality':quality,'step_export':export,
-        'parameters':part.model_dump(),'imported':imported,'exact_bounds':bounds,'geometry':geometry}
+        'parameters':part.model_dump(),'imported':imported,'exact_bounds':bounds,'geometry':geometry,'dimension_edits':dimension_edits}
 
 
 def _assembly_snapshot(doc,spec,record):
@@ -206,12 +208,19 @@ def _assembly_snapshot(doc,spec,record):
         constraint_ok=constrained==3 or (spec.allow_motion and not fixed and constrained==2)
         passed=passed and pose_ok and source_ok and constraint_ok
         part_model=_get(component,'GetModelDoc2');bodies=list(_get(part_model,'GetBodies2',0,False) or [])
+        dimension_readback=None
+        edited=record['parts'][instance.part_id].get('dimension_edits')
+        if edited:
+            from .dimensions import verify as verify_dimensions
+            dimension_readback=verify_dimensions(part_model,edited)
+            passed=passed and dimension_readback['passed']
         bounds=_exact_bounds(bodies,transform);assembly_bounds.append(bounds)
         rows.append({'id':instance.id,'name':name,'path':str(_get(component,'GetPathName')),
             'position_mm':[v*1000 for v in transform[9:12]],'rotation_matrix':transform[:9],
             'expected_position_mm':instance.position_mm,'pose_verified':pose_ok,'fixed':fixed,
             'constrained_status':constrained,'constraint_verified':constraint_ok,'source_verified':source_ok,
             'exact_bounds':bounds,
+            'dimension_edits':dimension_readback,
             'suppression_state':int(_get(component,'GetSuppression'))})
     mates=collect_mate_feature_summary(doc)
     actual_mates=[m for m in mates if m['type']!='MateGroup']
@@ -319,8 +328,15 @@ def execute_stage(app,spec_path,output_dir,stage,allowed_root):
                 from scripts.sw_sketch_quality import inspect_model_sketches
                 part=spec.parts[0];bodies=a._get_solid_bodies(doc);quality=inspect_model_sketches(doc)
                 volume=sum(a._body_mass_props(b,'mm')['volume_exact'] for b in bodies);expected=part.expected_volume()
-                record['verification']={'passed':bool(bodies) and (expected is None or math.isclose(volume,expected,rel_tol=1e-6,abs_tol=1e-3)) and (part.shape=='existing' or quality['status']=='pass'),
-                    'body_count':len(bodies),'volume_mm3':volume,'sketch_quality':quality}
+                record['verification']={'passed':bool(bodies) and volume>0 and (expected is None or math.isclose(volume,expected,rel_tol=1e-6,abs_tol=1e-3)) and (part.shape=='existing' or quality['status']=='pass'),
+                    'body_count':len(bodies),'volume_mm3':volume,'sketch_quality':quality,'exact_bounds':_exact_bounds(bodies)}
+                edited=record['parts'][part.id].get('dimension_edits')
+                if edited:
+                    from .dimensions import verify as verify_dimensions
+                    readback=verify_dimensions(doc,edited)
+                    record['verification']['dimension_edits']=readback
+                    record['verification']['passed']=record['verification']['passed'] and readback['passed']
+                    if not readback['passed']:raise RuntimeError('Saved/reopened local dimension edits did not verify')
             record['verification']['save_reopen_verified']=True
         elif kind=='delivery':
             from integrations.czuryk.step_export import export_full_step

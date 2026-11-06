@@ -6,9 +6,9 @@
 
 ## 下载与开始使用
 
-**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.8.0-rc1/SolidWorksAI-0.8.0-rc1-windows-x64.zip)**
+**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.9.0-rc1/SolidWorksAI-0.9.0-rc1-windows-x64.zip)**
 
-当前版本为 **0.8.0-rc1 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.8.0-rc1)。
+当前版本为 **0.9.0-rc1 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.9.0-rc1)。
 
 1. 准备 Windows 64 位电脑，并安装、激活 SolidWorks 2024。
 2. 点击上面的下载链接，下载后右键压缩包，选择“全部解压缩”。
@@ -26,10 +26,13 @@ GitHub 的 `Code → Download ZIP` 下载的是开发源码；直接使用程序
 SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年份尚未验收。
 
 
+上传SLDPRT后可以直接输入“厚度改成12毫米，两个孔改成直径10毫米，其余保持”。程序先读取驱动参数，修改工作副本并保存重开验证。
+
 ## 版本历史
 
 | 版本 | 主要更新 |
 | --- | --- |
+| [0.9.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.9.0-rc1) | 自然语言局部改模 |
 | [0.8.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.8.0-rc1) | 斜面与圆弧三视图、三方向孔、钻尖、沉头；中英文说明 |
 | [0.7.0-rc3](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.7.0-rc3) | 阶梯三视图、平底盲孔、圆柱沉孔及原生回读 |
 | [0.6.0-rc1](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.6.0-rc1) | DXF/DWG精确建模与PDF上传 |

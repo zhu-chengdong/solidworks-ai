@@ -8,6 +8,7 @@ import math
 from typing import Annotated,Literal
 from pydantic import BaseModel,ConfigDict,Field,model_validator
 from integrations.czuryk.reference_build import ReferenceGeometry,CircularHole
+from .dimensions import DimensionChange
 
 
 def _plane_normal(instance,plane):
@@ -33,6 +34,7 @@ class PartSpec(BaseModel):
     holes:list[CircularHole]=Field(default_factory=list,max_length=12)
     profile:ReferenceGeometry|None=None
     source_id:str|None=Field(default=None,pattern=r'^[a-f0-9]{32}$')
+    dimension_changes:list[DimensionChange]=Field(default_factory=list,max_length=24)
     color_rgb:list[Annotated[float,Field(ge=0,le=1)]]=Field(default_factory=lambda:[.72,.77,.83],min_length=3,max_length=3,description='Normalized RGB channels, each from 0 to 1; do not use 0 to 255 values.')
 
     @model_validator(mode='after')
@@ -45,6 +47,8 @@ class PartSpec(BaseModel):
         if missing:raise ValueError('Missing engineering dimensions: '+', '.join(missing))
         if any(not math.isfinite(c) or not 0<=c<=1 for c in self.color_rgb):raise ValueError('Invalid RGB')
         if self.shape!='existing' and self.source_id:raise ValueError('Only existing parts can reference a CAD input')
+        if self.dimension_changes and self.shape!='existing':raise ValueError('Local dimension edits require an uploaded existing part')
+        if len({c.name for c in self.dimension_changes})!=len(self.dimension_changes):raise ValueError('Duplicate dimension edit')
         if self.shape!='profile' and self.profile is not None:raise ValueError('Unexpected free profile')
         if self.shape=='profile' and self.profile.family not in {'prism','revolve'}:raise ValueError('Use the image workflow for smooth loft scenes')
         if self.shape=='l_bracket' and self.thickness_mm>=min(self.length_mm,self.height_mm):raise ValueError('Bracket wall exceeds its legs')
@@ -177,7 +181,7 @@ def skill_context():
         'built_in_checks':['create all native parts with fully defined sketches','insert repeated instances','add real coincident/distance/concentric mates','save and reopen the native assembly','read exact native bounds and volume','read actual mate entities and full constraint status','native interference detection','native STEP export and STEP reimport with body-count, bounds and volume checks'],
         'built_in_delivery':['SLDASM with dependent SLDPRT','STEP','BOM CSV','three native preview PNGs','dependency ZIP with geometry-verification.json and SHA256 hashes'],
         'limits':'Static assemblies of the listed recipes; this does not certify load, manufacturing tolerances or motion.'},
-      'editing':'when previous_context.plan.design exists, return a COMPLETE revised design preserving all unspecified parts, dimensions and mates; regenerate a new revision, never overwrite previous files',
+      'editing':'Uploaded existing parts support true local dimension_changes: use exact name, before_value and unit from native dimension catalog, plus requested value. Preserve all other driving dimensions and features. Ambiguous dimension intent requires clarification. Parameter-less imported solids cannot be dimension-edited. For previous recipe designs, return a COMPLETE revised design preserving unspecified parts, dimensions and mates; create a new revision. Never overwrite originals.',
       'requirements':'ask only missing critical dimensions, interfaces, hole type and intended mating relationship; no arbitrary defaults for engineering parts; visual-only estimates require explicit user permission and assumptions',
       'not_yet_qualified':'automatic true threads, gears, arbitrary fillets, mechanisms, tolerance design and manufacturing drawings need separate native 2024 qualification; do not silently omit requested features',
       'skills':['solidworks-vibecad','solidworks-automation/part','solidworks-automation/assembly','solidworks-automation/review']}
