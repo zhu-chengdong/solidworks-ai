@@ -21,7 +21,7 @@ Checked on 2026-11-06. Peer rows below describe their published implementation o
 
 | Priority | Gap | Required qualification |
 | --- | --- | --- |
-| Next | Manufacturing drawings / 制造工程图 | Native SLDDRW, first-angle views, model dimensions, sections, hole callouts, PDF and annotation readback; current 3D previews do not constitute manufacturing drawings. |
+| Qualified batch / 已验收批次 | Nominal part drawings / 零件标称工程图 | A3 first-angle front/top/left, associated overall/hole-position dimensions, top-entry native hole callouts, straight full section, save/reopen and actual PDF inspection. Tolerances, offset/multiple sections, assembly drawings and multiple sheets remain separate. / A3第一角主俯左、关联外形孔位尺寸、顶面孔标注、直线全剖与真实PDF核验；公差、阶梯或多个剖视、装配图及多页另行实施。 |
 | Next | Mechanism mates / 运动机构 | Angle/limit/hinge mates, solver-driven range checks, interference across travel; motor animation alone does not prove mechanism correctness. |
 | Next | Configurations and variants / 配置族与变型 | Real configuration isolation, parameter cycles, active-configuration readback and reference preservation. |
 | Later | General body/component patterns, advanced sweeps, shells and ribs / 更通用实体操作 | Dedicated native geometric and source-preservation tests per operation. |

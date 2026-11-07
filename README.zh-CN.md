@@ -6,9 +6,9 @@
 
 ## 下载与开始使用
 
-**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.14.0-rc11/SolidWorksAI-0.14.0-rc11-windows-x64.zip)**
+**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.15.0-rc4/SolidWorksAI-0.15.0-rc4-windows-x64.zip)**
 
-当前版本为 **0.14.0-rc11 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.14.0-rc11)。
+当前版本为 **0.15.0-rc4 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4)。
 
 1. 准备 Windows 64 位电脑，并安装、激活 SolidWorks 2024。
 2. 点击上面的下载链接，下载后右键压缩包，选择“全部解压缩”。
@@ -30,10 +30,19 @@ SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年
 
 参见[同类项目对比与后续优先级](release_tools/CAPABILITY_ROADMAP.md)。
 
+## 制造工程图
+
+选择“制造工程图”，上传一个SLDPRT，输入“生成A3第一角主俯左三视图，标注外形和孔位，增加经过孔中心的A-A全剖，导出PDF”即可。
+
+本批支持单实体零件、A3横向、第一角主俯左三视图、关联外形尺寸、最高+Z平面的圆孔位置与真实孔标注，以及一个水平或垂直直线全剖。保存重开后回读视图、尺寸、孔变量、剖切箭头和实际剖面线；检查原生PDF的数值、越界与尺寸文字重叠，再由已配置的视觉规划模型复核预览。
+
+交付可编辑SLDDRW、独立SLDPRT依赖、PDF、预览和带SHA256的ZIP，原上传零件保持不变。当前为标称图纸，公差与工艺由用户明确并复核；侧孔/底面入口孔、阶梯剖视、装配图和多页图另行实施。参见[原生API范围](engineering/MANUFACTURING_API.md)。
+
 ## 版本历史
 
 | 版本 | 主要更新 |
 | --- | --- |
+| [0.15.0-rc4](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4) | 原生制造工程图与PDF交付 |
 | [0.14.0-rc11](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.14.0-rc11) | 原生材料、质量BOM与MAX预算控制 |
 | [0.13.0-rc7](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.13.0-rc7) | 可编辑长圆槽与多边形口袋 |
 | [0.12.0-rc2](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.12.0-rc2) | 原生孔阵列与镜像 |

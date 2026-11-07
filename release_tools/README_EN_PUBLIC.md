@@ -6,9 +6,9 @@ Build editable parts and assemblies in your own **SOLIDWORKS 2024** using natura
 
 ## Download and start
 
-**[Download Windows x64 — includes the EXE](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.14.0-rc11/SolidWorksAI-0.14.0-rc11-windows-x64.zip)**
+**[Download Windows x64 — includes the EXE](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.15.0-rc4/SolidWorksAI-0.15.0-rc4-windows-x64.zip)**
 
-Current version: **0.14.0-rc11 prerelease**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.14.0-rc11).
+Current version: **0.15.0-rc4 prerelease**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4).
 
 1. Install and activate your own SOLIDWORKS 2024 on Windows x64.
 2. Download the Windows ZIP and extract it completely.
@@ -25,6 +25,7 @@ See the [capability comparison and priorities](release_tools/CAPABILITY_ROADMAP.
 
 | Release | Main changes |
 | --- | --- |
+| [0.15.0-rc4](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4) | Add native manufacturing drawings with associated dimensions sections and PDF verification |
 | [0.14.0-rc11](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.14.0-rc11) | Add verified materials and BOM with bounded MAX planning and stock edits |
 | [0.13.0-rc7](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.13.0-rc7) | Add native editable planar slots and polygon pockets with STEP checks |
 | [0.12.0-rc2](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.12.0-rc2) | Add associative hole patterns and mirrors with geometric acceptance |
@@ -37,6 +38,14 @@ See the [capability comparison and priorities](release_tools/CAPABILITY_ROADMAP.
 | [0.4.0-rc13](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.4.0-rc13) | View orientation/labels, automatic preview correction and versioned delivery |
 
 Older tags, original notes and downloads are retained. See the [full changelog](CHANGELOG.md), [中文更新记录](CHANGELOG.zh-CN.md) and [all releases](https://github.com/zhu-chengdong/solidworks-ai/releases).
+
+## Native manufacturing drawings
+
+Select **制造工程图** (manufacturing drawing), upload one SLDPRT and enter a request such as `生成A3第一角主俯左三视图，标注外形和孔位，增加经过孔中心的A-A全剖，导出PDF`.
+
+The qualified single-solid route creates A3 landscape front/top/left first-angle views, associated overall and top-entry circular-hole position dimensions, genuine hole callouts and one horizontal/vertical straight full section. Native readback checks dimensions, hole variables, cutting arrows and actual hatching after save/reopen. The real PDF is checked for values, clipping and dimension-text overlap, followed by visual review using your configured vision-capable planner. Outputs include editable SLDDRW, copied SLDPRT dependency, PDF, preview and a checksummed ZIP; the uploaded source stays unchanged.
+
+This produces nominal drawings. Supply and review manufacturing tolerances and processes separately. Side/bottom-entry hole coverage, offset sections, assembly drawings and multiple sheets are outside this batch; unsupported requests stop explicitly. No geometry or PDF is generated through desktop automation. See [native API scope](engineering/MANUFACTURING_API.md).
 
 ## Drawings to native parts
 

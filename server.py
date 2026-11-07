@@ -8,7 +8,7 @@ import json
 import os
 from pathlib import Path
 import sys
-from concurrent.futures import ThreadPoolExecutor
+from engineering.sta_executor import StaExecutor
 from engineering.call_lifecycle import wait_for_native_result
 from contextlib import contextmanager, redirect_stdout
 
@@ -114,8 +114,11 @@ def load_server():
 
     connection.connect_solidworks = connect_2024
     # One dedicated STA thread prevents cached sketch/feature proxies crossing apartments.
-    executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="SW2024-STA",
-                                  initializer=pythoncom.CoInitialize)
+    def release_session():
+        nonlocal session_app,baseline_documents
+        # Release COM references on their owning STA, preserving CAD documents.
+        session_app=None;baseline_documents=None
+    executor = StaExecutor(cleanup=release_session)
     original_run = engine._run_locked
     engine._coinitialize = lambda: None  # executor owns COM initialization
 
@@ -177,6 +180,50 @@ def load_server():
 
     # Resolve the local class before FastMCP inspects postponed annotations.
     globals()["ReferenceBuildInput"] = ReferenceBuildInput
+
+    class ManufacturingDrawingInput(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+        spec_path: str
+        stage: int = Field(default=0, ge=0, le=3)
+    globals()['ManufacturingDrawingInput'] = ManufacturingDrawingInput
+
+    class ManufacturingInspectInput(BaseModel):
+        model_config=ConfigDict(extra='forbid')
+        spec_path:str
+    globals()['ManufacturingInspectInput']=ManufacturingInspectInput
+
+    @engine.mcp.tool(name='solidworks_inspect_manufacturing',annotations={'readOnlyHint':True})
+    def inspect_manufacturing(params:ManufacturingInspectInput)->str:
+        """Read actual drawing views, associated dimensions, hole-callout variables and native sections for one task-pinned manufacturing drawing. No CAD writes."""
+        def operation():
+            from engineering.manufacturing import inspect_existing
+            app,_=connection.connect_solidworks()
+            try:return inspect_existing(app,params.spec_path,os.environ['SW_MCP_OUTPUT_ROOT'])
+            except Exception as exc:
+                from workbench.failure_trace import failure_trace
+                import uuid
+                diagnostic=Path(params.spec_path).resolve()
+                if diagnostic.name=='manufacturing-spec.json' and diagnostic.parent.is_relative_to(Path(os.environ['SW_MCP_OUTPUT_ROOT']).resolve()):
+                    (diagnostic.parent/('manufacturing-read-error-'+uuid.uuid4().hex[:8]+'.json')).write_text(json.dumps(failure_trace(exc),indent=2),encoding='utf8')
+                raise
+        return run_locked(operation,engine.ResponseFormat.JSON)
+
+    @engine.mcp.tool(name='solidworks_manufacturing_drawing')
+    def manufacturing_drawing(params: ManufacturingDrawingInput) -> str:
+        """Create a task-pinned native single-part A3 first-angle manufacturing drawing in four verified serial stages. No UI automation; original part bytes are preserved."""
+        def operation():
+            from engineering.manufacturing import execute_stage
+            app,_=connection.connect_solidworks()
+            try:return execute_stage(app,params.spec_path,params.stage,os.environ['SW_MCP_OUTPUT_ROOT'])
+            except Exception as exc:
+                from workbench.failure_trace import failure_trace
+                diagnostic=Path(params.spec_path).resolve()
+                if diagnostic.name=='manufacturing-spec.json' and diagnostic.parent.is_relative_to(Path(os.environ['SW_MCP_OUTPUT_ROOT']).resolve()):
+                    import uuid
+                    destination=diagnostic.parent/('manufacturing-error-'+str(params.stage)+'-'+uuid.uuid4().hex[:8]+'.json')
+                    destination.write_text(json.dumps(failure_trace(exc),ensure_ascii=False,indent=2),encoding='utf8')
+                raise
+        return run_locked(operation,engine.ResponseFormat.JSON)
 
     @engine.mcp.tool(name="solidworks_build_reference")
     def reference_build(params: ReferenceBuildInput) -> str:

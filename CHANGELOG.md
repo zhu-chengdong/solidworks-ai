@@ -4,6 +4,17 @@ English | [简体中文](CHANGELOG.zh-CN.md)
 
 Published tags, their original notes and downloads remain in [GitHub Releases](https://github.com/zhu-chengdong/solidworks-ai/releases). Unpublished local candidates are not listed as public releases. All current releases are Windows x64 prereleases; native CAD acceptance targets SOLIDWORKS 2024.
 
+## 0.15.0-rc4
+
+- Adds a manufacturing-drawing module: upload one SLDPRT and describe the drawing, using configured planning/review and execution models. Qualified scope is a single solid part, A3 landscape, first-angle front/top/left views and bounded scale selection.
+- Creates geometry-associated overall and top-entry circular-hole position dimensions plus genuine native hole callouts. Reads actual diameter, through, counterbore and blind-hole variables; hole locations reference arc centers. Unsupported side/bottom-entry holes stop instead of disappearing from the drawing.
+- Creates a real horizontal or vertical straight full section through a requested location, with native parent/cut/label/arrow/hatching readback. Fills this drawing's title and generated drawing identifier without changing the original part.
+- Verifies views, associated dimensions and hole variables after save/reopen. Exports native PDF, checks its actual character coordinates for values, clipping and dimension-text collisions, then requests a visual model review. Packages SLDDRW, copied dependency, PDF, preview and SHA256.
+- Adds geometry-based callout routing and dimension-text clearance from hole extension lines, stopping when the bounded sheet has no suitable location. Sol MAX rejected crossing leaders/text in an earlier candidate, which was retained and not published.
+- Fixes starvation of native callbacks on the idle STA owner, retaining serial work, draining accepted calls and releasing cached interfaces on their owning thread. Drawing document opens use one explicit call with local boundary/return-code/PID/identity diagnostics and no failure replay. Historical clr.dll failure evidence is kept separate from the reproduced apartment defect.
+- Qualified on SOLIDWORKS2024 using a single-hole plate and a three-hole plate with through, counterbore and blind features, including the packaged Windows natural-language/upload path. Private keys, credentials and local CAD files are excluded from releases. 2026 remains unqualified.
+- Output is an editable nominal drawing. Tolerances, GD&T, processes, offset sections, assembly drawings and multiple sheets require separate work; automatic drawing checks are not manufacturing certification.
+
 ## 0.14.0-rc11
 
 - Adds Part.material with actual installed-library grades for6061/6061-T6,316 sheet/annealed bar, plain carbon steel and ABS, without density-only substitutions. Explicit custom density requires a label and kg/m3 and currently a single-configuration part.

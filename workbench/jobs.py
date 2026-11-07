@@ -109,6 +109,11 @@ class Job:
             active_map={v['file']:v for v in active or []}
             try:current_package=Path(json.loads((self.output_dir/'design-acceptance.json').read_text(encoding='utf-8'))['package']).name
             except (OSError,KeyError,ValueError):current_package=None
+            if current_package is None:
+                try:
+                    drawing=json.loads((self.output_dir/'manufacturing-progress.json').read_text(encoding='utf8'))
+                    if drawing.get('package_verified'):current_package=Path(drawing['package']).name
+                except (OSError,KeyError,ValueError):pass
             for bmp in self.output_dir.rglob("*.bmp"):
                 if {'inputs','validation'}.intersection(bmp.relative_to(self.output_dir).parts):
                     continue
@@ -123,7 +128,7 @@ class Job:
             for path in sorted(self.output_dir.rglob("*")):
                 if {'inputs','validation'}.intersection(path.relative_to(self.output_dir).parts):
                     continue
-                if path.is_file() and path.name not in {"task.json", "task.tmp",'cad-inputs.json','engineering-progress.json'} and not path.name.startswith('~$') and path.stat().st_size:
+                if path.is_file() and path.name not in {"task.json", "task.tmp",'cad-inputs.json','engineering-progress.json','manufacturing-progress.json','manufacturing-spec.json','native-view-rotations.json'} and not path.name.startswith(('~$','manufacturing-attempt-','manufacturing-error-','manufacturing-read-error-')) and not path.name.endswith(('.native-io.jsonl','.native-open.jsonl')) and path.stat().st_size:
                     relative = path.relative_to(self.output_dir).as_posix()
                     is_image=path.suffix.lower() in {".png", ".jpg", ".jpeg"}
                     preferred=relative in active_map
@@ -149,7 +154,7 @@ class Job:
 class JobManager:
     def __init__(self, engine, root=ARTIFACT_ROOT, registry=None):
         self.engine, self.root = engine, Path(root)
-        self.registry = registry or ModuleRegistry([Module("solidworks", "SolidWorks 助手", ("text", "image"), engine)])
+        self.registry = registry or ModuleRegistry([Module("solidworks", "SolidWorks 助手", ("text", "image", "cad"), engine),Module('manufacturing','制造工程图',('text','cad'),engine)])
         self.jobs = {}
         self.recent = []
         self.lock = threading.RLock()
