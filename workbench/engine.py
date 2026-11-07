@@ -396,6 +396,9 @@ class WorkbenchEngine:
 
     async def run(self, job):
         job.check_stop()
+        if getattr(job,'module_id','solidworks')=='assembly_drawing':
+            from .assembly_drawing_runner import run_assembly_drawing
+            return await run_assembly_drawing(self,job)
         if getattr(job,'module_id','solidworks')=='manufacturing':
             from .manufacturing_runner import run_manufacturing
             return await run_manufacturing(self,job)

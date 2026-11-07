@@ -12,6 +12,11 @@ import subprocess
 import sys
 import zipfile
 
+if __package__:
+    from .version_policy import require_source_version
+else:
+    from version_policy import require_source_version
+
 ROOT = Path(__file__).resolve().parents[1]
 FILES = ['app_runtime.py', 'desktop_main.py', 'server.py', 'agent.py',
          'launch-workbench.pyw', 'requirements-desktop.txt', 'requirements-reference.txt', 'providers.example.json',
@@ -109,8 +114,10 @@ def main():
     parser.add_argument('--tag',required=True)
     parser.add_argument('--source-only',action='store_true')
     args=parser.parse_args()
-    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,60}',args.tag):
-        parser.error('Use a short unique version tag')
+    try:
+        require_source_version(args.tag, ROOT/'workbench/webserver.py')
+    except ValueError as exc:
+        parser.error(str(exc))
     release=ROOT/'releases'/args.tag
     release.mkdir(parents=True,exist_ok=False)
     source=release/'SolidWorksAI-source'

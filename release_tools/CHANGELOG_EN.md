@@ -6,6 +6,19 @@ Published tags, their original notes and downloads remain in [GitHub Releases](h
 
 2026-11-07 release-status update: all 11 existing public versions were promoted to regular GitHub releases, with 0.15.0-rc4 selected as latest. Original tags, release notes and download assets are unchanged. This update changes release status and documentation only.
 
+## 0.16.0
+
+- Selects attached edges using actual component transforms and visible-curve clearance, retains persistent native attachment, and compares actual leader geometry after reopening. Sol visual-review ambiguity blocks qualification.
+
+- Adds a natural-language assembly-drawing module for a ZIP containing one SLDASM and its complete SLDPRT dependencies: A3 landscape, first-angle front/top plus isometric views, editable SLDDRW and native PDF.
+- Creates a genuine parts-only native BOM with linked source-document names. Reads native BOM features, instance identities, item numbers and repeated quantities rather than substituting a general table.
+- Creates one dedicated InsertBOMBalloon2 annotation per component instance. Numbers remain linked to the BOM, and attached native edges/components and numbering sources are checked after save/reopen.
+- Uses bounded pure-Python assignment of actual leader endpoints and verifies noncrossing native leaders. Checks native BOM row heights/view clearance and matches every actual PDF BOM cell and instance balloon number.
+- Validates and pins complete local dependency ZIPs, relocates native references and preserves original hashes. Rejects traversal, ambiguous names, disguised CAD, encrypted and oversized archives. Packages the drawing, copied assembly/parts, PDF, CSV and SHA256.
+- Checks Windows commit headroom, saves task-owned references through the active assembly without opening every child graphics window, and closes saved task documents after delivery while preserving other user documents. Fixes Windows ZIP member separators.
+- Qualifies the preserved bracket/shaft/plate assembly: seven instances, five distinct parts, quantities1/2/1/1/2, seven associated native balloons, reopening, actual PDF and dependency ZIP, and the packaged natural-language workflow.
+- Future versions use numeric MAJOR.MINOR.PATCH and regular Latest releases with matched source/EXE/checksums/acceptance. Qualified on SOLIDWORKS2024 flat resolved assemblies; nested/exploded/sectioned/multisheet drawings and manufacturing tolerances require separate work. Keys and local CAD are excluded.
+
 ## 0.15.0-rc4
 
 - Adds a manufacturing-drawing module: upload one SLDPRT and describe the drawing, using configured planning/review and execution models. Qualified scope is a single solid part, A3 landscape, first-angle front/top/left views and bounded scale selection.

@@ -1,11 +1,10 @@
-name: Build Windows candidate
+name: Build Windows packages
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Unique candidate version
+        description: Release version MAJOR.MINOR.PATCH matching workbench/webserver.py (no rc)
         required: true
-        default: 0.1.0-rc1
 permissions:
   contents: read
 jobs:

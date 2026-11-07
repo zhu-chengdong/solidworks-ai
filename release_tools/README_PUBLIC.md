@@ -6,9 +6,11 @@
 
 ## 下载与开始使用
 
-**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.15.0-rc4/SolidWorksAI-0.15.0-rc4-windows-x64.zip)**
+后续更新遵循[发布规则](release_tools/RELEASING.md)，测试通过后直接正式发布，使用纯数字版本号，同时交付源码和EXE，排除密钥及本机资料。
 
-当前版本为 **0.15.0-rc4 正式发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4)。
+**[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.16.0/SolidWorksAI-0.16.0-windows-x64.zip)**
+
+当前版本为 **0.16.0 正式发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.16.0)。
 
 2026-11-07已将现有11个公开版本全部转为GitHub正式发布，保留历史标签中的`-rcN`、文件名和原始更新说明。[进入最新版本](https://github.com/zhu-chengdong/solidworks-ai/releases/latest)。
 
@@ -32,6 +34,12 @@ SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年
 
 参见[同类项目对比与后续优先级](release_tools/CAPABILITY_ROADMAP.md)。
 
+## 装配工程图
+
+选择“装配工程图”，添加一个包含SLDASM及全部SLDPRT依赖的ZIP，再输入“生成装配工程图，添加BOM和每个组件的序号气泡，导出PDF”。依赖在本地复制并重定位，原装配与零件保持不变。
+
+本版验收扁平已解析装配、A3第一角主俯视及等轴测、原生仅零件BOM、每实例关联序号气泡。支架轴孔板实测为7个实例、5行BOM和7个气泡；保存重开后核对数量、组件关联及实际PDF。完成后关闭本任务已保存文档以释放资源，其他用户文档保留。嵌套、爆炸、装配剖视及多页另行实施。[原生接口与范围](engineering/ASSEMBLY_DRAWING_API.md)。
+
 ## 制造工程图
 
 选择“制造工程图”，上传一个SLDPRT，输入“生成A3第一角主俯左三视图，标注外形和孔位，增加经过孔中心的A-A全剖，导出PDF”即可。
@@ -44,6 +52,7 @@ SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年
 
 | 版本 | 主要更新 |
 | --- | --- |
+| [0.16.0](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.16.0) | 原生装配工程图、BOM、关联气泡与PDF |
 | [0.15.0-rc4](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4) | 原生制造工程图与PDF交付 |
 | [0.14.0-rc11](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.14.0-rc11) | 原生材料、质量BOM与MAX预算控制 |
 | [0.13.0-rc7](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.13.0-rc7) | 可编辑长圆槽与多边形口袋 |

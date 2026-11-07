@@ -235,6 +235,22 @@ def load_server():
             return build_reference(app, params.spec_path, params.output_path, os.environ["SW_MCP_OUTPUT_ROOT"], params.component_start)
         return run_locked(operation, engine.ResponseFormat.JSON)
 
+    @engine.mcp.tool(name='solidworks_assembly_drawing')
+    def assembly_drawing(params:ManufacturingDrawingInput)->str:
+        """Create an immutable task-pinned flat-assembly drawing with a native BOM, associated per-instance balloons and verified PDF/dependency delivery, in four serial stages."""
+        def operation():
+            from engineering.assembly_drawing import execute_stage
+            app,_=connection.connect_solidworks()
+            try:return execute_stage(app,params.spec_path,params.stage,os.environ['SW_MCP_OUTPUT_ROOT'])
+            except Exception as exc:
+                from workbench.failure_trace import failure_trace
+                import uuid
+                path=Path(params.spec_path).resolve()
+                if path.name=='assembly-drawing-spec.json' and path.parent.is_relative_to(Path(os.environ['SW_MCP_OUTPUT_ROOT']).resolve()):
+                    (path.parent/('assembly-drawing-error-'+str(params.stage)+'-'+uuid.uuid4().hex[:8]+'.json')).write_text(json.dumps(failure_trace(exc),ensure_ascii=False,indent=2),encoding='utf8')
+                raise
+        return run_locked(operation,engine.ResponseFormat.JSON)
+
     class DrawingConvertInput(BaseModel):
         model_config=ConfigDict(extra='forbid')
         input_path:str

@@ -114,6 +114,11 @@ class Job:
                     drawing=json.loads((self.output_dir/'manufacturing-progress.json').read_text(encoding='utf8'))
                     if drawing.get('package_verified'):current_package=Path(drawing['package']).name
                 except (OSError,KeyError,ValueError):pass
+            if current_package is None:
+                try:
+                    assembly_drawing=json.loads((self.output_dir/'assembly-drawing-progress.json').read_text(encoding='utf8'))
+                    if assembly_drawing.get('package_verified'):current_package=Path(assembly_drawing['package']).name
+                except (OSError,KeyError,ValueError):pass
             for bmp in self.output_dir.rglob("*.bmp"):
                 if {'inputs','validation'}.intersection(bmp.relative_to(self.output_dir).parts):
                     continue
@@ -128,7 +133,7 @@ class Job:
             for path in sorted(self.output_dir.rglob("*")):
                 if {'inputs','validation'}.intersection(path.relative_to(self.output_dir).parts):
                     continue
-                if path.is_file() and path.name not in {"task.json", "task.tmp",'cad-inputs.json','engineering-progress.json','manufacturing-progress.json','manufacturing-spec.json','native-view-rotations.json'} and not path.name.startswith(('~$','manufacturing-attempt-','manufacturing-error-','manufacturing-read-error-')) and not path.name.endswith(('.native-io.jsonl','.native-open.jsonl')) and path.stat().st_size:
+                if path.is_file() and path.name not in {"task.json", "task.tmp",'cad-inputs.json','engineering-progress.json','manufacturing-progress.json','manufacturing-spec.json','native-view-rotations.json','assembly-drawing-progress.json','assembly-drawing-spec.json'} and not path.name.startswith(('~$','manufacturing-attempt-','manufacturing-error-','manufacturing-read-error-','assembly-drawing-attempt-','assembly-drawing-error-')) and not path.name.endswith(('.native-io.jsonl','.native-open.jsonl')) and path.stat().st_size:
                     relative = path.relative_to(self.output_dir).as_posix()
                     is_image=path.suffix.lower() in {".png", ".jpg", ".jpeg"}
                     preferred=relative in active_map
@@ -154,7 +159,7 @@ class Job:
 class JobManager:
     def __init__(self, engine, root=ARTIFACT_ROOT, registry=None):
         self.engine, self.root = engine, Path(root)
-        self.registry = registry or ModuleRegistry([Module("solidworks", "SolidWorks 助手", ("text", "image", "cad"), engine),Module('manufacturing','制造工程图',('text','cad'),engine)])
+        self.registry = registry or ModuleRegistry([Module("solidworks", "SolidWorks 助手", ("text", "image", "cad"), engine),Module('manufacturing','制造工程图',('text','cad'),engine),Module('assembly_drawing','装配工程图',('text','cad'),engine)])
         self.jobs = {}
         self.recent = []
         self.lock = threading.RLock()
@@ -198,6 +203,13 @@ class JobManager:
         cad_inputs = cad_inputs or []
         drawing_inputs = drawing_inputs or []
         previous=self.get(previous_id) if previous_id else None
+        input_metadata=[meta for _,meta in cad_inputs]
+        if not input_metadata and previous and previous.get('module_id')==module_id:input_metadata=previous.get('cad_inputs',[])
+        assembly_files=[meta for meta in input_metadata if meta.get('kind')=='assembly']
+        if module_id=='assembly_drawing':
+            if len(input_metadata)!=1 or len(assembly_files)!=1 or references or drawing_inputs:
+                raise UserFacingError('装配工程图请添加一个包含SLDASM及全部零件的ZIP，再输入BOM、气泡和出图要求。')
+        elif assembly_files:raise UserFacingError('装配依赖ZIP请在“装配工程图”模块使用。')
         if previous and previous.get('drawing_inputs') and not drawing_inputs:
             previous_dir=Path(previous['output_dir']).resolve()
             if not previous_dir.is_relative_to(self.root.resolve()):raise UserFacingError('原任务图纸路径不可用。')

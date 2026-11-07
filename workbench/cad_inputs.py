@@ -12,6 +12,15 @@ class CadStore:
 
     def add(self,raw,name):
         name=Path(str(name).replace('\\','/')).name
+        if Path(name).suffix.lower()=='.zip':
+            if not 0<len(raw)<=MAX_CAD_BYTES:raise UserFacingError('装配依赖ZIP最多50MB。')
+            from .assembly_inputs import inspect_archive
+            manifest=inspect_archive(raw)
+            self.root.mkdir(parents=True,exist_ok=True);asset=uuid.uuid4().hex;path=self.root/(asset+'.zip')
+            path.write_bytes(raw)
+            metadata={'id':asset,'name':name,'size':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'kind':'assembly','part_count':len(manifest['parts'])}
+            path.with_suffix('.json').write_text(json.dumps(metadata,ensure_ascii=False),encoding='utf8')
+            return metadata
         if Path(name).suffix.lower()!='.sldprt':raise UserFacingError('当前请选择SLDPRT零件；已有装配体需要完整依赖包。')
         if not 0<len(raw)<=MAX_CAD_BYTES:raise UserFacingError('每个零件文件最多50MB。')
         legacy=raw.startswith(bytes.fromhex('D0CF11E0A1B11AE1'))
@@ -31,6 +40,7 @@ class CadStore:
         for asset in ids:
             if not isinstance(asset,str) or not re.fullmatch('[a-f0-9]{32}',asset):raise UserFacingError('零件文件标识无效。')
             path=self.root/(asset+'.SLDPRT')
+            if not path.is_file():path=self.root/(asset+'.zip')
             try:
                 metadata=json.loads(path.with_suffix('.json').read_text(encoding='utf-8'))
                 if hashlib.sha256(path.read_bytes()).hexdigest()!=metadata['sha256']:raise ValueError('changed')
@@ -45,9 +55,17 @@ def pin_cad_inputs(job,files):
     for source,metadata in files:
         if any(r['id']==metadata['id'] for r in job.cad_inputs):continue
         folder=job.output_dir/'inputs'/'cad';folder.mkdir(parents=True,exist_ok=True)
-        target=folder/(metadata['id']+'.SLDPRT');raw=source.read_bytes()
+        suffix='.zip' if metadata.get('kind')=='assembly' else '.SLDPRT'
+        target=folder/(metadata['id']+suffix);raw=source.read_bytes()
         if hashlib.sha256(raw).hexdigest()!=metadata['sha256']:raise UserFacingError('零件文件已改变，请重新选择。')
-        target.write_bytes(raw);job.cad_inputs.append({**metadata,'file':target.relative_to(job.output_dir).as_posix()})
+        target.write_bytes(raw)
+        item={**metadata,'file':target.relative_to(job.output_dir).as_posix()}
+        if metadata.get('kind')=='assembly':
+            from .assembly_inputs import pin_archive
+            native_folder=folder/('assembly_'+metadata['id']);manifest=pin_archive(raw,native_folder)
+            item['assembly_file']=(native_folder/manifest['assembly']['relative']).relative_to(job.output_dir).as_posix()
+            item['documents']=[{'file':(native_folder/f['relative']).relative_to(job.output_dir).as_posix(),'name':f['name'],'sha256':f['sha256'],'size':f['size']} for f in manifest['files']]
+        job.cad_inputs.append(item)
     for item in job.cad_inputs:mapping[item['id']]={'path':str(job.output_dir/item['file']),'sha256':item['sha256'],'name':item['name']}
     (job.output_dir/'cad-inputs.json').write_text(json.dumps(mapping,ensure_ascii=False,indent=2),encoding='utf-8')
     job.save()

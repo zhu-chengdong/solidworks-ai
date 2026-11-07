@@ -21,6 +21,7 @@ Checked on 2026-11-06. Peer rows below describe their published implementation o
 
 | Priority | Gap | Required qualification |
 | --- | --- | --- |
+| Qualified batch / 已验收批次 | Flat assembly drawings / 扁平装配工程图 | A3 first-angle front/top plus isometric, genuine parts-only BOM, per-instance associated balloons, native save/reopen, actual PDF cell/number checks and dependency ZIP. Seven-instance bracket/shaft/plate fixture has five BOM rows and seven balloons. Nested/exploded/assembly-section/multiple-sheet drawings remain separate. / 原生BOM、每实例关联气泡、保存重开、真实PDF和完整依赖包；七组件实测为五行BOM、七个气泡。 |
 | Qualified batch / 已验收批次 | Nominal part drawings / 零件标称工程图 | A3 first-angle front/top/left, associated overall/hole-position dimensions, top-entry native hole callouts, straight full section, save/reopen and actual PDF inspection. Tolerances, offset/multiple sections, assembly drawings and multiple sheets remain separate. / A3第一角主俯左、关联外形孔位尺寸、顶面孔标注、直线全剖与真实PDF核验；公差、阶梯或多个剖视、装配图及多页另行实施。 |
 | Next | Mechanism mates / 运动机构 | Angle/limit/hinge mates, solver-driven range checks, interference across travel; motor animation alone does not prove mechanism correctness. |
 | Next | Configurations and variants / 配置族与变型 | Real configuration isolation, parameter cycles, active-configuration readback and reference preservation. |

@@ -26,3 +26,16 @@ and no global accessibility, add-in, or system setting is disabled as a workarou
 Qualification requires actual native part/drawing open-close cycles, drawing
 save/reopen and PDF checks, then the packaged application workflow. A passing
 mock or generic COM test alone is not SOLIDWORKS acceptance.
+
+Assembly-drawing qualification also checks available Windows commit before
+opening new documents. Free physical RAM alone is insufficient evidence of
+allocation headroom. Test-owned copies accumulated during development; closing
+only their enumerated native documents released about4.9GiB of private commit.
+The new path saves owned references through the active assembly without opening
+every child graphics window and closes its saved task documents after delivery.
+
+A read-only Python stack sample isolated another wait to SciPy BLAS DLL loading
+on the CAD STA, with no outstanding SolidWorks COM call. Only that Python test
+service was ended; the CAD process was preserved. Balloon assignment now uses a
+bounded pure-Python algorithm, so no new scientific DLL is loaded in that call.
+Keep private process/stack diagnostics out of release archives.

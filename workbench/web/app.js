@@ -60,7 +60,10 @@ function render() {
     button.disabled=!!state.active_job;
     button.addEventListener('click',()=>{const cadDraft=[...cadAttachments];moduleId=item.id;$('new-task').click();cadAttachments=cadDraft;renderAttachments();render();});modules.append(button);
   });
-  const manufacturing=moduleId==='manufacturing';
+  const assemblyDrawing=moduleId==='assembly_drawing';
+  const manufacturing=moduleId==='manufacturing'||assemblyDrawing;
+  $('cad-files').accept=assemblyDrawing?'.zip':'.sldprt';
+  $('cad-upload-button').textContent=assemblyDrawing?'添加装配依赖ZIP':'添加零件文件';
   $('upload-button').disabled=manufacturing||uploading||sending||!!state.active_job||attachments.length>=4;
   $('cad-upload-button').disabled=uploading||sending||!!state.active_job||cadAttachments.length>=(manufacturing?1:12);
   $('drawing-upload-button').disabled=manufacturing||uploading||sending||!!state.active_job||drawingAttachments.length>=1;
@@ -85,8 +88,8 @@ function render() {
   $('stop-task').hidden=!state.active_job;
   $('send-task').disabled=sending||uploading||!!state.active_job;
   $('message').disabled=!!state.active_job;
-  $('message').placeholder=job?.phase==='clarify' ? '补充文件或要求，我会继续处理这个任务。' : manufacturing?'添加一个SLDPRT零件，例如“生成A3第一角三视图，标注外形和孔位，增加经过孔中心的A-A全剖，导出PDF”。':'例如：建一个边长10毫米的立方体，保存并导出STEP。';
-  $('composer-hint').textContent=state.active_job ? '正在执行；停止后会保留已经完成的操作' : manufacturing?'添加一个SLDPRT · 第一角主俯左三视图 · 原生SLDDRW和PDF':'Enter 发送，Shift + Enter 换行';
+  $('message').placeholder=job?.phase==='clarify' ? '补充文件或要求，我会继续处理这个任务。' : assemblyDrawing?'添加含SLDASM和全部SLDPRT的ZIP，例如“生成装配工程图，添加BOM和每个组件的序号气泡，导出PDF”。':manufacturing?'添加一个SLDPRT零件，例如“生成A3第一角三视图，标注外形和孔位，增加经过孔中心的A-A全剖，导出PDF”。':'例如：建一个边长10毫米的立方体，保存并导出STEP。';
+  $('composer-hint').textContent=state.active_job ? '正在执行；停止后会保留已经完成的操作' : assemblyDrawing?'添加一个装配依赖ZIP · 原生BOM与关联序号气泡 · SLDDRW和PDF':manufacturing?'添加一个SLDPRT · 第一角主俯左三视图 · 原生SLDDRW和PDF':'Enter 发送，Shift + Enter 换行';
   if (!job) { $('conversation').replaceChildren(); return; }
   const signature=JSON.stringify([job.id,job.phase,job.requests,job.summary,job.plan,job.events.length,job.artifacts,job.usage]);
   if(signature===renderSignature) return;
@@ -221,7 +224,7 @@ $('chat-form').addEventListener('submit',async event=>{
   event.preventDefault();if(sending||state.active_job)return;
   const vector=drawingAttachments.some(a=>a.kind==='vector')||(!drawingAttachments.length&&state.jobs.find(j=>j.id===selected)?.drawing_inputs?.some(a=>a.kind==='vector'));
   if(!configured()&&!vector){openSettings();settingsNotice('先保存两个角色所用供应商的密钥，就可以开始执行。');return;}
-  const message=$('message').value.trim()||(drawingAttachments.length?'请根据二维图纸新建零件，先询问缺少的尺寸。':attachments.length?'请根据参考图片新建零件。':cadAttachments.length?(moduleId==='manufacturing'?'为上传零件生成A3第一角主俯左三视图，标注外形和孔位，增加经过孔中心的A-A全剖，导出PDF。':'请使用选择的零件规划装配，先确认缺少的配合关系。'):'');if(!message)return;
+  const message=$('message').value.trim()||(drawingAttachments.length?'请根据二维图纸新建零件，先询问缺少的尺寸。':attachments.length?'请根据参考图片新建零件。':cadAttachments.length?(moduleId==='assembly_drawing'?'为上传装配生成A3装配工程图，添加原生BOM和每个实例的关联序号气泡，导出PDF并打包完整依赖。':moduleId==='manufacturing'?'为上传零件生成A3第一角主俯左三视图，标注外形和孔位，增加经过孔中心的A-A全剖，导出PDF。':'请使用选择的零件规划装配，先确认缺少的配合关系。'):'');if(!message)return;
   sending=true;notice('');render();
   try {const job=await api('/api/jobs',{message,previous_job_id:selected,module_id:moduleId,reference_ids:attachments.map(a=>a.id),cad_ids:cadAttachments.map(a=>a.id),drawing_ids:drawingAttachments.map(a=>a.id),reference_mode:$('reference-mode').value});selected=job.id;attachments=[];cadAttachments=[];drawingAttachments=[];renderAttachments();$('message').value='';state.jobs=[job,...state.jobs.filter(item=>item.id!==job.id)];state.active_job=job.id;renderSignature='';render();}
   catch(error){notice(error.message);}finally{sending=false;await refresh();}
@@ -264,13 +267,13 @@ $('image-files').addEventListener('change',async()=>{
 $('cad-upload-button').addEventListener('click',()=>$('cad-files').click());
 $('cad-files').addEventListener('change',async()=>{
   const files=[...$('cad-files').files];$('cad-files').value='';
-  const limit=moduleId==='manufacturing'?1:12;
+  const limit=['manufacturing','assembly_drawing'].includes(moduleId)?1:12;
   if(files.length+cadAttachments.length>limit){notice(moduleId==='manufacturing'?'制造工程图每个任务添加一个零件文件。':'每个任务最多12个零件文件。');return;}
   uploading=true;render();notice('正在保存本机零件副本。CAD文件不会直接发送给模型。');
   try{for(const file of files){
     if(file.size>50*1024*1024)throw new Error('每个零件文件最多50MB。');
     const response=await fetch('/api/cad-uploads',{method:'POST',headers:{'X-App-Token':token,'Content-Type':'application/octet-stream','X-File-Name':encodeURIComponent(file.name)},body:file});
     const result=await response.json();if(!response.ok)throw new Error(result.error||'零件文件保存失败。');cadAttachments.push(result);renderAttachments();
-  }notice(moduleId==='manufacturing'?'零件已加入。请说明视图、比例、剖切位置及标注要求，或直接发送生成默认标称工程图。':'零件已加入。请说明装配关系、对齐方式和间隙；缺少的关键参数会先询问。');}
+  }notice(moduleId==='assembly_drawing'?'装配依赖已加入。请说明图纸、BOM和序号气泡要求，或直接发送生成默认装配工程图。':moduleId==='manufacturing'?'零件已加入。请说明视图、比例、剖切位置及标注要求，或直接发送生成默认标称工程图。':'零件已加入。请说明装配关系、对齐方式和间隙；缺少的关键参数会先询问。');}
   catch(error){notice(error.message);}finally{uploading=false;render();}
 });

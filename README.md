@@ -6,9 +6,11 @@ Build editable parts and assemblies in your own **SOLIDWORKS 2024** using natura
 
 ## Download and start
 
-**[Download Windows x64 — includes the EXE](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.15.0-rc4/SolidWorksAI-0.15.0-rc4-windows-x64.zip)**
+Future updates follow the [release policy](release_tools/RELEASING.md): qualified regular releases, plain numeric versions, paired source/EXE downloads and credential exclusion.
 
-Current version: **0.15.0-rc4, regular release**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4).
+**[Download Windows x64 — includes the EXE](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.16.0/SolidWorksAI-0.16.0-windows-x64.zip)**
+
+Current version: **0.16.0, regular release**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.16.0).
 
 All 11 existing public versions were promoted to regular GitHub releases on 2026-11-07. Historical `-rcN` identifiers, download names and original release notes are retained. [Latest release](https://github.com/zhu-chengdong/solidworks-ai/releases/latest).
 
@@ -27,6 +29,7 @@ See the [capability comparison and priorities](release_tools/CAPABILITY_ROADMAP.
 
 | Release | Main changes |
 | --- | --- |
+| [0.16.0](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.16.0) | Native assembly drawings, BOM, associated balloons and PDF |
 | [0.15.0-rc4](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4) | Add native manufacturing drawings with associated dimensions sections and PDF verification |
 | [0.14.0-rc11](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.14.0-rc11) | Add verified materials and BOM with bounded MAX planning and stock edits |
 | [0.13.0-rc7](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.13.0-rc7) | Add native editable planar slots and polygon pockets with STEP checks |
@@ -40,6 +43,12 @@ See the [capability comparison and priorities](release_tools/CAPABILITY_ROADMAP.
 | [0.4.0-rc13](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.4.0-rc13) | View orientation/labels, automatic preview correction and versioned delivery |
 
 Older tags, original notes and downloads are retained. See the [full changelog](CHANGELOG.md), [中文更新记录](CHANGELOG.zh-CN.md) and [all releases](https://github.com/zhu-chengdong/solidworks-ai/releases).
+
+## Assembly drawings
+
+Select **装配工程图**, add a ZIP containing one SLDASM and all its SLDPRT dependencies, then request a drawing with BOM, item-number balloons and PDF. The app copies and relocates the dependencies locally and preserves the originals. BOM quantities and native per-instance associations are checked after reopening, and the actual PDF text is matched before visual review.
+
+Qualified scope: one flat resolved assembly on A3, first-angle front/top plus isometric views. The seven-instance bracket/shaft/plate example has five native BOM rows and seven associated balloons. Nested/exploded/assembly-section/multisheet workflows remain separate. See [native API scope](engineering/ASSEMBLY_DRAWING_API.md).
 
 ## Native manufacturing drawings
 
