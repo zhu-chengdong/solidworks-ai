@@ -2,7 +2,9 @@
 
 English | [简体中文](CHANGELOG.zh-CN.md)
 
-Published tags, their original notes and downloads remain in [GitHub Releases](https://github.com/zhu-chengdong/solidworks-ai/releases). Unpublished local candidates are not listed as public releases. All current releases are Windows x64 prereleases; native CAD acceptance targets SOLIDWORKS 2024.
+Published tags, their original notes and downloads remain in [GitHub Releases](https://github.com/zhu-chengdong/solidworks-ai/releases). Unpublished local candidates are not listed as public releases. All current releases are Windows x64 releases; native CAD acceptance targets SOLIDWORKS 2024.
+
+2026-11-07 release-status update: all 11 existing public versions were promoted to regular GitHub releases, with 0.15.0-rc4 selected as latest. Original tags, release notes and download assets are unchanged. This update changes release status and documentation only.
 
 ## 0.15.0-rc4
 

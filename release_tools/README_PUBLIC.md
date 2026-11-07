@@ -8,7 +8,9 @@
 
 **[点击下载 Windows 版（内含 EXE）](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.15.0-rc4/SolidWorksAI-0.15.0-rc4-windows-x64.zip)**
 
-当前版本为 **0.15.0-rc4 预发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4)。
+当前版本为 **0.15.0-rc4 正式发布版**。[发行说明、源码和校验和](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4)。
+
+2026-11-07已将现有11个公开版本全部转为GitHub正式发布，保留历史标签中的`-rcN`、文件名和原始更新说明。[进入最新版本](https://github.com/zhu-chengdong/solidworks-ai/releases/latest)。
 
 1. 准备 Windows 64 位电脑，并安装、激活 SolidWorks 2024。
 2. 点击上面的下载链接，下载后右键压缩包，选择“全部解压缩”。
@@ -22,7 +24,7 @@ GitHub 的 `Code → Download ZIP` 下载的是开发源码；直接使用程序
 用自然语言操作自己电脑上的 SolidWorks。可分别选择模型理解与复核需求、
 通过原生 MCP / COM 调用建模工具。无需鼠标、键盘或窗口消息自动化。
 
-这是 Windows x64 的预发布候选版，当前验证目标为 SolidWorks 2024。它不是
+这是 Windows x64 发布版，当前验证目标为 SolidWorks 2024。它不是
 SolidWorks 的替代品，也不包含 SolidWorks 软件或许可证。其他年份尚未验收。
 
 

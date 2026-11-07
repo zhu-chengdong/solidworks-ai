@@ -8,7 +8,9 @@ Build editable parts and assemblies in your own **SOLIDWORKS 2024** using natura
 
 **[Download Windows x64 — includes the EXE](https://github.com/zhu-chengdong/solidworks-ai/releases/download/v0.15.0-rc4/SolidWorksAI-0.15.0-rc4-windows-x64.zip)**
 
-Current version: **0.15.0-rc4 prerelease**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4).
+Current version: **0.15.0-rc4, regular release**. [Release notes, source and checksums](https://github.com/zhu-chengdong/solidworks-ai/releases/tag/v0.15.0-rc4).
+
+All 11 existing public versions were promoted to regular GitHub releases on 2026-11-07. Historical `-rcN` identifiers, download names and original release notes are retained. [Latest release](https://github.com/zhu-chengdong/solidworks-ai/releases/latest).
 
 1. Install and activate your own SOLIDWORKS 2024 on Windows x64.
 2. Download the Windows ZIP and extract it completely.
